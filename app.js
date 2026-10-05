@@ -114,7 +114,9 @@ const CATALOGO_ELEMENTOS = [
   { id: 'flecha-doble', nombre: 'Flecha doble', categoria: 'anotacion', forma: 'flecha', figura: 'doble', color: '#2f6f8f', ancho: 140, alto: 60 },
   { id: 'punto-interes', nombre: 'Punto de interés', categoria: 'anotacion', forma: 'simbolo', simbolo: 'puntoInteres', color: '#d9534f', tamano: 40 },
   { id: 'advertencia', nombre: 'Advertencia', categoria: 'anotacion', forma: 'simbolo', simbolo: 'advertencia', color: '#f2b134', tamano: 40 },
-  { id: 'norte', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 }
+  { id: 'norte', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 },
+  { id: 'escala-grafica', nombre: 'Escala gráfica', categoria: 'anotacion', forma: 'escala', color: '#2f3a37', tamano: 34 },
+  { id: 'cota', nombre: 'Cota (medida)', categoria: 'anotacion', forma: 'cota', color: '#2f3a37', ancho: 150, alto: 26 }
 ];
 
 // Cómo se ve cada tipo de texto
@@ -147,6 +149,12 @@ let siguienteId = 1;
 let idSeleccionado = null;
 let nivelZoom = 1;
 let categoriaActiva = 'todos';
+
+// Escala y ayudas de dibujo del plano.
+// metrosPorPixel es un valor estimado: calíbralo con una cota sobre una distancia conocida.
+let planoConfig = { metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false };
+let herramienta = 'seleccionar';   // 'seleccionar' o 'medir'
+let medicionEnCurso = null;        // la cota que se está dibujando con la herramienta Medir
 
 // Datos temporales mientras se arrastra algo
 let arrastreDesdePanel = null;   // un elemento que viene del panel
@@ -408,10 +416,6 @@ const SIMBOLOS = {
   }
 };
 
-// El SVG completo de un símbolo, listo para ponerlo en la página o convertirlo en imagen
-function crearSvgDeSimbolo(tipo, color) {
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + SIMBOLOS[tipo.simbolo](color) + '</svg>';
-}
 
 
 /* =============================================================
@@ -450,6 +454,14 @@ const listaMapas = document.getElementById('lista-mapas');
 const campoAbrirArchivo = document.getElementById('campo-abrir-archivo');
 const aviso = document.getElementById('aviso');
 
+const capaCuadricula = document.getElementById('capa-cuadricula');
+const campoMetrosPixel = document.getElementById('campo-metros-pixel');
+const campoMostrarCuadricula = document.getElementById('campo-mostrar-cuadricula');
+const campoTamanoCuadricula = document.getElementById('campo-tamano-cuadricula');
+const campoIman = document.getElementById('campo-iman');
+const campoMostrarArea = document.getElementById('campo-mostrar-area');
+const campoMedidaReal = document.getElementById('campo-medida-real');
+
 
 /* =============================================================
    4. DIBUJAR ELEMENTOS
@@ -477,9 +489,22 @@ function normalizarAngulo(angulo) {
   return ((angulo + 180) % 360 + 360) % 360 - 180;
 }
 
-// Los símbolos y los textos tienen un solo tamaño; el resto, ancho y alto
+// Los símbolos, los textos y la escala gráfica tienen un solo tamaño; el resto, ancho y alto
 function usaTamanoUnico(tipo) {
-  return tipo.forma === 'simbolo' || tipo.forma === 'texto';
+  return tipo.forma === 'simbolo' || tipo.forma === 'texto' || tipo.forma === 'escala';
+}
+
+// Las líneas y las cotas solo cambian de largo con la manija; su grosor se cambia en el panel
+function soloCambiaElLargo(tipo) {
+  return tipo.forma === 'linea' || tipo.forma === 'cota';
+}
+
+// Con el imán activo, las posiciones saltan a la línea más cercana de la cuadrícula
+function ajustarAlIman(valor) {
+  if (!planoConfig.imanActivo) {
+    return valor;
+  }
+  return Math.round(valor / planoConfig.tamanoCuadricula) * planoConfig.tamanoCuadricula;
 }
 
 // Convierte '#22c55e' en 'rgba(34, 197, 94, 0.45)'
@@ -510,8 +535,158 @@ function crearDatosElemento(tipo, x, y) {
     rotacion: 0,
     opacidad: 100,
     color: tipo.color || '#000000',
-    texto: tipo.textoInicial || ''
+    texto: tipo.textoInicial || '',
+    mostrarArea: false
   };
+}
+
+// Los textos se dibujan con HTML; todo lo demás, con un dibujo SVG
+function seDibujaConSvg(tipo) {
+  return tipo.forma !== 'texto';
+}
+
+// Medidas escritas a la manera colombiana: "12,5 m", "1.250 m²"
+function formatearMetros(metros) {
+  if (metros >= 1000) {
+    return (metros / 1000).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + ' km';
+  }
+  return metros.toLocaleString('es-CO', { maximumFractionDigits: metros < 10 ? 1 : 0 }) + ' m';
+}
+
+function formatearArea(metrosCuadrados) {
+  const texto = Math.round(metrosCuadrados).toLocaleString('es-CO') + ' m²';
+  if (metrosCuadrados >= 10000) {
+    return texto + ' (' + (metrosCuadrados / 10000).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + ' ha)';
+  }
+  return texto;
+}
+
+// Área real de una zona: se mide en píxeles y se convierte a metros cuadrados
+function calcularArea(elemento) {
+  const tipo = buscarTipo(elemento.tipoId);
+  const areaEnPixeles = tipo.figura === 'elipse'
+    ? Math.PI * elemento.ancho * elemento.alto / 4
+    : elemento.ancho * elemento.alto;
+  return areaEnPixeles * planoConfig.metrosPorPixel * planoConfig.metrosPorPixel;
+}
+
+// Elige una longitud "redonda" (50 m, 100 m…) para que la escala gráfica mida cerca de 160 px
+function elegirLargoDeEscala() {
+  const opciones = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  let mejor = opciones[0];
+  opciones.forEach(function (metros) {
+    const diferencia = Math.abs(metros / planoConfig.metrosPorPixel - 160);
+    if (diferencia < Math.abs(mejor / planoConfig.metrosPorPixel - 160)) {
+      mejor = metros;
+    }
+  });
+  return mejor;
+}
+
+const FUENTE_SVG = 'system-ui, Segoe UI, Roboto, Arial, sans-serif';
+
+// Texto con borde blanco, para que se lea encima del mapa
+function textoConContorno(x, y, texto, tamano, color) {
+  return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-family="' + FUENTE_SVG + '" font-size="' + tamano +
+    '" font-weight="700" fill="' + color + '" stroke="#ffffff" stroke-width="' + (tamano * 0.3) +
+    '" stroke-linejoin="round" paint-order="stroke">' + texto + '</text>';
+}
+
+// Cada forma devuelve cuánto mide en pantalla y el dibujo SVG que va adentro.
+// Así el mismo dibujo sirve para la página, las miniaturas y la imagen PNG.
+const DIBUJOS = {
+  simbolo: function (elemento, tipo) {
+    return {
+      ancho: elemento.alto,
+      alto: elemento.alto,
+      contenido: '<g transform="scale(' + elemento.alto / 100 + ')">' + SIMBOLOS[tipo.simbolo](elemento.color) + '</g>'
+    };
+  },
+
+  zona: function (elemento, tipo) {
+    const ancho = elemento.ancho;
+    const alto = elemento.alto;
+    const pintura = ' fill="' + colorTransparente(elemento.color, 0.45) + '" stroke="' + elemento.color + '" stroke-width="3"/>';
+    let contenido = tipo.figura === 'elipse'
+      ? '<ellipse cx="' + ancho / 2 + '" cy="' + alto / 2 + '" rx="' + (ancho / 2 - 1.5) + '" ry="' + (alto / 2 - 1.5) + '"' + pintura
+      : '<rect x="1.5" y="1.5" width="' + (ancho - 3) + '" height="' + (alto - 3) + '" rx="9"' + pintura;
+    if (elemento.mostrarArea) {
+      contenido += textoConContorno(ancho / 2, alto / 2 + 4, formatearArea(calcularArea(elemento)), 12, TRAZO);
+    }
+    return { ancho: ancho, alto: alto, contenido: contenido };
+  },
+
+  linea: function (elemento, tipo) {
+    const ancho = elemento.ancho;
+    const alto = elemento.alto;
+    let contenido = '<rect width="' + ancho + '" height="' + alto + '" rx="' + alto / 2 + '" fill="' + elemento.color + '"/>';
+    if (tipo.colorCentro) {
+      const raya = medidasRayaCentral(alto);
+      contenido += '<line x1="' + alto / 2 + '" y1="' + alto / 2 + '" x2="' + (ancho - alto / 2) + '" y2="' + alto / 2 +
+        '" stroke="' + tipo.colorCentro + '" stroke-width="' + raya.grosor + '" stroke-dasharray="' + raya.tramo + ' ' + raya.tramo + '"/>';
+    }
+    return { ancho: ancho, alto: alto, contenido: contenido };
+  },
+
+  flecha: function (elemento, tipo) {
+    // Pasamos los puntos de la caja de 100 x 50 al tamaño real de la flecha
+    const puntos = PUNTOS_FLECHA[tipo.figura].map(function (punto) {
+      return (punto[0] / 100 * elemento.ancho) + ',' + (punto[1] / 50 * elemento.alto);
+    }).join(' ');
+    return {
+      ancho: elemento.ancho,
+      alto: elemento.alto,
+      contenido: '<polygon points="' + puntos + '" fill="' + elemento.color + '"/>'
+    };
+  },
+
+  // Barra blanca y negra que muestra cuántos metros mide un tramo del mapa
+  escala: function (elemento) {
+    const metros = elegirLargoDeEscala();
+    const largo = metros / planoConfig.metrosPorPixel;
+    const margen = 30;
+    const alto = elemento.alto;
+    const altoBarra = alto * 0.28;
+    const tamanoLetra = alto * 0.36;
+    const arribaBarra = alto - altoBarra - 2;
+    let contenido = '';
+    for (let i = 0; i < 4; i++) {
+      contenido += '<rect x="' + (margen + i * largo / 4) + '" y="' + arribaBarra + '" width="' + largo / 4 + '" height="' + altoBarra +
+        '" fill="' + (i % 2 === 0 ? elemento.color : '#ffffff') + '" stroke="' + elemento.color + '" stroke-width="1.2"/>';
+    }
+    contenido += textoConContorno(margen, arribaBarra - 4, '0', tamanoLetra, elemento.color);
+    contenido += textoConContorno(margen + largo / 2, arribaBarra - 4, String(metros / 2), tamanoLetra, elemento.color);
+    contenido += textoConContorno(margen + largo, arribaBarra - 4, formatearMetros(metros), tamanoLetra, elemento.color);
+    return { ancho: largo + margen * 2, alto: alto, contenido: contenido };
+  },
+
+  // Línea de medida de arquitectura: marcas inclinadas en los extremos y la medida encima.
+  // La caja mide 8 px más que la cota para que las marcas no se corten.
+  cota: function (elemento) {
+    const largo = elemento.ancho;
+    const alto = elemento.alto;
+    const y = alto * 0.7;
+    const inicio = 4;
+    const fin = largo + 4;
+    const contenido =
+      '<g stroke="' + elemento.color + '" stroke-width="1.5" stroke-linecap="round">' +
+      '<line x1="' + inicio + '" y1="' + y + '" x2="' + fin + '" y2="' + y + '"/>' +
+      '<line x1="' + inicio + '" y1="' + (y - 7) + '" x2="' + inicio + '" y2="' + (y + 5) + '"/>' +
+      '<line x1="' + fin + '" y1="' + (y - 7) + '" x2="' + fin + '" y2="' + (y + 5) + '"/>' +
+      '<line x1="' + (inicio - 4) + '" y1="' + (y + 4) + '" x2="' + (inicio + 4) + '" y2="' + (y - 4) + '" stroke-width="2.5"/>' +
+      '<line x1="' + (fin - 4) + '" y1="' + (y + 4) + '" x2="' + (fin + 4) + '" y2="' + (y - 4) + '" stroke-width="2.5"/></g>' +
+      textoConContorno(largo / 2 + 4, y - 5, formatearMetros(largo * planoConfig.metrosPorPixel), alto * 0.46, elemento.color);
+    return { ancho: largo + 8, alto: alto, contenido: contenido };
+  }
+};
+
+// Arma el SVG completo de un elemento, con su tamaño exacto
+function crearSvgDeElemento(elemento) {
+  const tipo = buscarTipo(elemento.tipoId);
+  const dibujo = DIBUJOS[tipo.forma](elemento, tipo);
+  dibujo.svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + dibujo.ancho + '" height="' + dibujo.alto +
+    '" viewBox="0 0 ' + dibujo.ancho + ' ' + dibujo.alto + '">' + dibujo.contenido + '</svg>';
+  return dibujo;
 }
 
 // Dibuja el aspecto de un elemento dentro de "nodo" (un <div>).
@@ -523,63 +698,27 @@ function dibujarContenido(nodo, elemento, claseBase) {
   nodo.style.cssText = '';
   nodo.style.opacity = elemento.opacidad / 100;
 
-  if (tipo.forma === 'simbolo') {
-    nodo.style.width = elemento.alto + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.innerHTML = crearSvgDeSimbolo(tipo, elemento.color);
+  if (seDibujaConSvg(tipo)) {
+    const dibujo = crearSvgDeElemento(elemento);
+    nodo.style.width = dibujo.ancho + 'px';
+    nodo.style.height = dibujo.alto + 'px';
+    nodo.innerHTML = dibujo.svg;
+    return;
   }
 
-  if (tipo.forma === 'zona') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.style.backgroundColor = colorTransparente(elemento.color, 0.45);
-    nodo.style.borderWidth = '3px';
-    nodo.style.borderColor = elemento.color;
-    nodo.style.borderRadius = tipo.figura === 'elipse' ? '50%' : '10px';
+  // Textos
+  const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
+  nodo.textContent = elemento.texto || ' ';
+  nodo.style.fontSize = elemento.alto + 'px';
+  nodo.style.fontWeight = estilo.peso;
+  nodo.style.color = elemento.color;
+  if (estilo.contorno) {
+    nodo.classList.add('con-contorno');
   }
-
-  if (tipo.forma === 'linea') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.style.backgroundColor = elemento.color;
-    nodo.style.borderRadius = elemento.alto / 2 + 'px';
-    if (tipo.colorCentro) {
-      const raya = medidasRayaCentral(elemento.alto);
-      const rayaCentral = document.createElement('div');
-      rayaCentral.className = 'linea-centro';
-      rayaCentral.style.left = elemento.alto / 2 + 'px';
-      rayaCentral.style.right = elemento.alto / 2 + 'px';
-      rayaCentral.style.height = raya.grosor + 'px';
-      // Rayas cortadas: un tramo de color y un tramo transparente, repetidos
-      rayaCentral.style.background = 'repeating-linear-gradient(90deg, ' +
-        tipo.colorCentro + ' 0 ' + raya.tramo + 'px, transparent ' + raya.tramo + 'px ' + raya.tramo * 2 + 'px)';
-      nodo.appendChild(rayaCentral);
-    }
-  }
-
-  if (tipo.forma === 'texto') {
-    const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
-    nodo.textContent = elemento.texto || ' ';
-    nodo.style.fontSize = elemento.alto + 'px';
-    nodo.style.fontWeight = estilo.peso;
-    nodo.style.color = elemento.color;
-    if (estilo.contorno) {
-      nodo.classList.add('con-contorno');
-    }
-    if (estilo.fondo) {
-      nodo.classList.add('con-fondo');
-      nodo.style.backgroundColor = estilo.fondo;
-      nodo.style.borderRadius = estilo.pastilla ? '999px' : '6px';
-    }
-  }
-
-  if (tipo.forma === 'flecha') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    const puntos = PUNTOS_FLECHA[tipo.figura].map(function (punto) { return punto.join(','); }).join(' ');
-    nodo.innerHTML =
-      '<svg viewBox="0 0 100 50" preserveAspectRatio="none">' +
-      '<polygon points="' + puntos + '" fill="' + elemento.color + '"></polygon></svg>';
+  if (estilo.fondo) {
+    nodo.classList.add('con-fondo');
+    nodo.style.backgroundColor = estilo.fondo;
+    nodo.style.borderRadius = estilo.pastilla ? '999px' : '6px';
   }
 }
 
@@ -646,21 +785,20 @@ function trazarRectanguloRedondeado(contexto, x, y, ancho, alto, radio) {
   }
 }
 
-// Convierte el SVG de un símbolo en una imagen que el canvas pueda dibujar.
+// Convierte el SVG de un elemento en una imagen que el canvas pueda dibujar.
 // Cargar una imagen tarda un momento, por eso devuelve una "promesa".
-function cargarImagenDeSimbolo(elemento) {
-  const tipo = buscarTipo(elemento.tipoId);
+function cargarImagenDeElemento(elemento) {
+  const dibujo = crearSvgDeElemento(elemento);
   return new Promise(function (resolver) {
     const imagen = new Image();
     imagen.onload = function () { resolver(imagen); };
     imagen.onerror = function () { resolver(null); };
-    imagen.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(crearSvgDeSimbolo(tipo, elemento.color));
+    imagen.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(dibujo.svg);
   });
 }
 
-function dibujarElementoEnCanvas(contexto, elemento, imagenDelSimbolo) {
+function dibujarElementoEnCanvas(contexto, elemento, imagenDelElemento) {
   const tipo = buscarTipo(elemento.tipoId);
-  const ancho = elemento.ancho;
   const alto = elemento.alto;
 
   contexto.save();
@@ -670,83 +808,39 @@ function dibujarElementoEnCanvas(contexto, elemento, imagenDelSimbolo) {
   contexto.rotate(elemento.rotacion * Math.PI / 180);
   contexto.globalAlpha = elemento.opacidad / 100;
 
-  if (tipo.forma === 'simbolo' && imagenDelSimbolo) {
-    contexto.drawImage(imagenDelSimbolo, -alto / 2, -alto / 2, alto, alto);
+  if (seDibujaConSvg(tipo)) {
+    if (imagenDelElemento) {
+      const dibujo = crearSvgDeElemento(elemento);
+      contexto.drawImage(imagenDelElemento, -dibujo.ancho / 2, -dibujo.alto / 2, dibujo.ancho, dibujo.alto);
+    }
+    contexto.restore();
+    return;
   }
 
-  if (tipo.forma === 'zona') {
-    if (tipo.figura === 'elipse') {
-      contexto.beginPath();
-      contexto.ellipse(0, 0, ancho / 2 - 1.5, alto / 2 - 1.5, 0, 0, Math.PI * 2);
-    } else {
-      trazarRectanguloRedondeado(contexto, -ancho / 2 + 1.5, -alto / 2 + 1.5, ancho - 3, alto - 3, 9);
-    }
-    contexto.fillStyle = colorTransparente(elemento.color, 0.45);
+  // Textos
+  const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
+  contexto.font = estilo.peso + ' ' + alto + 'px ' + FUENTE_TEXTOS;
+  contexto.textAlign = 'center';
+  contexto.textBaseline = 'middle';
+  if (estilo.fondo) {
+    const anchoCaja = contexto.measureText(elemento.texto).width + alto * 1.4;
+    const altoCaja = alto * 1.8;
+    trazarRectanguloRedondeado(contexto, -anchoCaja / 2, -altoCaja / 2, anchoCaja, altoCaja,
+      estilo.pastilla ? altoCaja / 2 : 6);
+    contexto.fillStyle = estilo.fondo;
     contexto.fill();
-    contexto.lineWidth = 3;
-    contexto.strokeStyle = elemento.color;
+    contexto.lineWidth = 1;
+    contexto.strokeStyle = '#d1d5db';
     contexto.stroke();
   }
-
-  if (tipo.forma === 'linea') {
-    trazarRectanguloRedondeado(contexto, -ancho / 2, -alto / 2, ancho, alto, alto / 2);
-    contexto.fillStyle = elemento.color;
-    contexto.fill();
-    if (tipo.colorCentro) {
-      const raya = medidasRayaCentral(alto);
-      contexto.beginPath();
-      contexto.moveTo(-ancho / 2 + alto / 2, 0);
-      contexto.lineTo(ancho / 2 - alto / 2, 0);
-      contexto.setLineDash([raya.tramo, raya.tramo]);
-      contexto.lineWidth = raya.grosor;
-      contexto.strokeStyle = tipo.colorCentro;
-      contexto.stroke();
-    }
+  if (estilo.contorno) {
+    contexto.lineWidth = alto * 0.15;
+    contexto.lineJoin = 'round';
+    contexto.strokeStyle = '#ffffff';
+    contexto.strokeText(elemento.texto, 0, 0);
   }
-
-  if (tipo.forma === 'texto') {
-    const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
-    contexto.font = estilo.peso + ' ' + alto + 'px ' + FUENTE_TEXTOS;
-    contexto.textAlign = 'center';
-    contexto.textBaseline = 'middle';
-    if (estilo.fondo) {
-      const anchoCaja = contexto.measureText(elemento.texto).width + alto * 1.4;
-      const altoCaja = alto * 1.8;
-      trazarRectanguloRedondeado(contexto, -anchoCaja / 2, -altoCaja / 2, anchoCaja, altoCaja,
-        estilo.pastilla ? altoCaja / 2 : 6);
-      contexto.fillStyle = estilo.fondo;
-      contexto.fill();
-      contexto.lineWidth = 1;
-      contexto.strokeStyle = '#d1d5db';
-      contexto.stroke();
-    }
-    if (estilo.contorno) {
-      contexto.lineWidth = alto * 0.15;
-      contexto.lineJoin = 'round';
-      contexto.strokeStyle = '#ffffff';
-      contexto.strokeText(elemento.texto, 0, 0);
-    }
-    contexto.fillStyle = elemento.color;
-    contexto.fillText(elemento.texto, 0, 0);
-  }
-
-  if (tipo.forma === 'flecha') {
-    contexto.beginPath();
-    PUNTOS_FLECHA[tipo.figura].forEach(function (punto, indice) {
-      // Pasamos de la caja de 100 x 50 al tamaño real, con el centro en (0, 0)
-      const x = punto[0] / 100 * ancho - ancho / 2;
-      const y = punto[1] / 50 * alto - alto / 2;
-      if (indice === 0) {
-        contexto.moveTo(x, y);
-      } else {
-        contexto.lineTo(x, y);
-      }
-    });
-    contexto.closePath();
-    contexto.fillStyle = elemento.color;
-    contexto.fill();
-  }
-
+  contexto.fillStyle = elemento.color;
+  contexto.fillText(elemento.texto, 0, 0);
   contexto.restore();
 }
 
@@ -800,8 +894,17 @@ function crearVistaPrevia(tipo) {
     elementoDeMuestra.ancho = 50;
     elementoDeMuestra.alto = 26;
   }
+  if (tipo.forma === 'cota') {
+    elementoDeMuestra.ancho = 44;
+    elementoDeMuestra.alto = 22;
+  }
   const nodo = document.createElement('div');
   dibujarContenido(nodo, elementoDeMuestra, 'vista-previa');
+  // Si la miniatura es más grande que la tarjeta (como la escala gráfica), la achicamos
+  const anchoMiniatura = parseFloat(nodo.style.width) || 0;
+  if (anchoMiniatura > 52) {
+    nodo.style.transform = 'scale(' + (52 / anchoMiniatura) + ')';
+  }
   return nodo;
 }
 
@@ -920,7 +1023,7 @@ function estaSobreElMapa(xPantalla, yPantalla) {
 }
 
 function agregarElementoAlMapa(tipo, x, y) {
-  const elemento = crearDatosElemento(tipo, Math.round(x), Math.round(y));
+  const elemento = crearDatosElemento(tipo, Math.round(ajustarAlIman(x)), Math.round(ajustarAlIman(y)));
   elemento.id = siguienteId;
   siguienteId = siguienteId + 1;
   elementosEnMapa.push(elemento);
@@ -989,8 +1092,8 @@ function moverElemento(evento) {
   const elemento = accionEnCurso.elemento;
   const desplazamientoX = (evento.clientX - accionEnCurso.inicioX) / nivelZoom;
   const desplazamientoY = (evento.clientY - accionEnCurso.inicioY) / nivelZoom;
-  elemento.x = Math.round(limitar(accionEnCurso.xOriginal + desplazamientoX, 0, ANCHO_LIENZO));
-  elemento.y = Math.round(limitar(accionEnCurso.yOriginal + desplazamientoY, 0, ALTO_LIENZO));
+  elemento.x = Math.round(ajustarAlIman(limitar(accionEnCurso.xOriginal + desplazamientoX, 0, ANCHO_LIENZO)));
+  elemento.y = Math.round(ajustarAlIman(limitar(accionEnCurso.yOriginal + desplazamientoY, 0, ALTO_LIENZO)));
   colocarNodo(accionEnCurso.nodo, elemento);
 }
 
@@ -1032,8 +1135,7 @@ function cambiarTamanoConManija(evento) {
     const xPropia = dx * Math.cos(radianes) + dy * Math.sin(radianes);
     const yPropia = -dx * Math.sin(radianes) + dy * Math.cos(radianes);
     elemento.ancho = Math.round(limitar(Math.abs(xPropia) * 2, LIMITES.ancho.minimo, LIMITES.ancho.maximo));
-    if (tipo.forma !== 'linea') {
-      // En las líneas la manija solo cambia el largo; el grosor se cambia en el panel
+    if (!soloCambiaElLargo(tipo)) {
       elemento.alto = Math.round(limitar(Math.abs(yPropia) * 2, LIMITES.alto.minimo, LIMITES.alto.maximo));
     }
   }
@@ -1044,6 +1146,10 @@ function cambiarTamanoConManija(evento) {
 // Con el ratón, arrastrar el fondo mueve la vista del mapa.
 // (En el móvil esto ya lo hace el navegador al deslizar el dedo.)
 function empezarPaneo(evento) {
+  if (herramienta === 'medir') {
+    empezarMedicion(evento);
+    return;
+  }
   if (evento.target.closest('.elemento-mapa')) {
     return;
   }
@@ -1064,8 +1170,75 @@ function moverPaneo(evento) {
   contenedorLienzo.scrollTop = paneoEnCurso.scrollArriba - (evento.clientY - paneoEnCurso.inicioY);
 }
 
+// --- Herramienta Medir: arrastrar sobre el mapa crea una cota ---
+
+function empezarMedicion(evento) {
+  evento.preventDefault();
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  const inicio = { x: ajustarAlIman(punto.x), y: ajustarAlIman(punto.y) };
+  const elemento = crearDatosElemento(buscarTipo('cota'), inicio.x, inicio.y);
+  elemento.id = siguienteId;
+  siguienteId = siguienteId + 1;
+  elemento.ancho = 1;
+  elementosEnMapa.push(elemento);
+  const nodo = crearNodoEnMapa(elemento);
+  capaElementos.appendChild(nodo);
+  medicionEnCurso = { elemento: elemento, nodo: nodo, inicio: inicio };
+}
+
+function moverMedicion(evento) {
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  const fin = { x: ajustarAlIman(punto.x), y: ajustarAlIman(punto.y) };
+  const inicio = medicionEnCurso.inicio;
+  const elemento = medicionEnCurso.elemento;
+  // La cota va del punto inicial al final: su centro es el punto medio
+  // y su giro es el ángulo de la línea que los une.
+  let angulo = Math.atan2(fin.y - inicio.y, fin.x - inicio.x) * 180 / Math.PI;
+  // Para que el texto nunca quede de cabeza, dejamos el ángulo entre -90° y 90°
+  if (angulo > 90) {
+    angulo = angulo - 180;
+  }
+  if (angulo <= -90) {
+    angulo = angulo + 180;
+  }
+  elemento.x = Math.round((inicio.x + fin.x) / 2);
+  elemento.y = Math.round((inicio.y + fin.y) / 2);
+  elemento.ancho = Math.max(1, Math.round(Math.hypot(fin.x - inicio.x, fin.y - inicio.y)));
+  elemento.rotacion = Math.round(angulo);
+  refrescarNodo(medicionEnCurso.nodo, elemento);
+}
+
+function terminarMedicion() {
+  const elemento = medicionEnCurso.elemento;
+  medicionEnCurso = null;
+  cambiarHerramienta('seleccionar');
+  if (elemento.ancho < 5) {
+    // Fue solo un toque: no hay nada que medir
+    elementosEnMapa = elementosEnMapa.filter(function (otro) { return otro !== elemento; });
+    dibujarMapa();
+    return;
+  }
+  seleccionarElemento(elemento.id);
+  mostrarAviso('Medida: ' + formatearMetros(elemento.ancho * planoConfig.metrosPorPixel));
+}
+
+function cambiarHerramienta(nombre) {
+  herramienta = nombre;
+  document.body.dataset.herramienta = nombre;
+  document.querySelectorAll('[data-herramienta]').forEach(function (boton) {
+    boton.classList.toggle('activa', boton.dataset.herramienta === nombre);
+  });
+  if (nombre === 'medir') {
+    seleccionarElemento(null);
+    mostrarAviso('Arrastra sobre el mapa para medir una distancia');
+  }
+}
+
 // Un solo lugar escucha el movimiento del puntero para todos los tipos de arrastre
 function alMoverPuntero(evento) {
+  if (medicionEnCurso) {
+    moverMedicion(evento);
+  }
   if (arrastreDesdePanel) {
     moverArrastreDesdePanel(evento);
   }
@@ -1087,6 +1260,9 @@ function alSoltarPuntero(evento) {
   if (arrastreDesdePanel) {
     terminarArrastreDesdePanel(evento);
   }
+  if (medicionEnCurso) {
+    terminarMedicion();
+  }
   accionEnCurso = null;
   paneoEnCurso = null;
   contenedorLienzo.classList.remove('paneando');
@@ -1094,6 +1270,9 @@ function alSoltarPuntero(evento) {
 
 function alCancelarPuntero() {
   cancelarArrastreDesdePanel();
+  if (medicionEnCurso) {
+    terminarMedicion();
+  }
   accionEnCurso = null;
   paneoEnCurso = null;
   contenedorLienzo.classList.remove('paneando');
@@ -1120,8 +1299,11 @@ function mostrarPropiedades() {
   document.getElementById('grupo-texto').hidden = tipo.forma !== 'texto';
   document.getElementById('grupo-tamano').hidden = !tamanoUnico;
   document.getElementById('grupo-ancho').hidden = tamanoUnico;
-  document.getElementById('grupo-alto').hidden = tamanoUnico;
-  document.getElementById('nombre-ancho').textContent = tipo.forma === 'linea' ? 'Largo' : 'Ancho';
+  document.getElementById('grupo-alto').hidden = tamanoUnico || tipo.forma === 'cota';
+  document.getElementById('grupo-area').hidden = tipo.forma !== 'zona';
+  document.getElementById('grupo-medida').hidden = tipo.forma !== 'cota';
+  campoMostrarArea.checked = Boolean(elemento.mostrarArea);
+  document.getElementById('nombre-ancho').textContent = soloCambiaElLargo(tipo) ? 'Largo' : 'Ancho';
   document.getElementById('nombre-alto').textContent = tipo.forma === 'linea' ? 'Grosor' : 'Alto';
 
   if (document.activeElement !== campoTexto) {
@@ -1142,6 +1324,28 @@ function mostrarValoresDeDeslizadores(elemento) {
   document.getElementById('valor-alto').textContent = elemento.alto + ' px';
   document.getElementById('valor-rotacion').textContent = elemento.rotacion + '°';
   document.getElementById('valor-opacidad').textContent = elemento.opacidad + '%';
+  const tipo = buscarTipo(elemento.tipoId);
+  if (tipo.forma === 'zona') {
+    document.getElementById('valor-area').textContent = formatearArea(calcularArea(elemento));
+  }
+  if (tipo.forma === 'cota') {
+    document.getElementById('valor-medida').textContent = formatearMetros(elemento.ancho * planoConfig.metrosPorPixel);
+  }
+}
+
+// Calibrar: si esta cota mide X metros en la realidad, cada píxel vale X / largo
+function calibrarConCota() {
+  const elemento = buscarElemento(idSeleccionado);
+  const medidaReal = Number(campoMedidaReal.value.replace(',', '.'));
+  if (!elemento || !(medidaReal > 0)) {
+    mostrarAviso('Escribe la medida real en metros, por ejemplo 25');
+    return;
+  }
+  planoConfig.metrosPorPixel = medidaReal / elemento.ancho;
+  aplicarPlano();
+  dibujarMapa();
+  seleccionarElemento(elemento.id);
+  mostrarAviso('Escala calibrada: 1 px = ' + planoConfig.metrosPorPixel.toLocaleString('es-CO', { maximumFractionDigits: 3 }) + ' m');
 }
 
 // Aplica un cambio al elemento seleccionado y lo vuelve a dibujar
@@ -1230,6 +1434,20 @@ function aplicarFondo() {
   document.getElementById('valor-visibilidad').textContent = fondoDelMapa.visibilidad + '%';
 }
 
+// Muestra la cuadrícula y pone los valores de la escala en el panel
+function aplicarPlano() {
+  capaCuadricula.hidden = !planoConfig.cuadriculaVisible;
+  capaCuadricula.style.backgroundSize = planoConfig.tamanoCuadricula + 'px ' + planoConfig.tamanoCuadricula + 'px';
+  campoMetrosPixel.value = Number(planoConfig.metrosPorPixel.toFixed(3));
+  campoMostrarCuadricula.checked = planoConfig.cuadriculaVisible;
+  campoTamanoCuadricula.value = String(planoConfig.tamanoCuadricula);
+  campoIman.checked = planoConfig.imanActivo;
+  document.getElementById('valor-cuadricula-metros').textContent =
+    'cada cuadro ≈ ' + formatearMetros(planoConfig.tamanoCuadricula * planoConfig.metrosPorPixel);
+  document.getElementById('boton-cuadricula').classList.toggle('activa', planoConfig.cuadriculaVisible);
+  document.getElementById('boton-iman').classList.toggle('activa', planoConfig.imanActivo);
+}
+
 // El mapa se amplía con "scale". El marco que lo rodea cambia de tamaño
 // para que las barras de desplazamiento sepan cuánto mide el mapa ampliado.
 function cambiarZoom(nuevoZoom) {
@@ -1273,6 +1491,7 @@ function obtenerDatosDelMapa() {
     nombre: nombreDelMapa,
     fecha: new Date().toISOString(),
     fondo: Object.assign({}, fondoDelMapa),
+    plano: Object.assign({}, planoConfig),
     elementos: elementosEnMapa.map(function (elemento) { return Object.assign({}, elemento); })
   };
 }
@@ -1280,11 +1499,13 @@ function obtenerDatosDelMapa() {
 function cargarDatosDelMapa(datos) {
   nombreDelMapa = datos.nombre || 'Mi mapa de Siloé';
   fondoDelMapa = Object.assign({ color: '#ffffff', visibilidad: 100, tenido: false }, datos.fondo);
+  planoConfig = Object.assign({ metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false }, datos.plano);
   // Ignoramos elementos cuyo tipo ya no exista en el catálogo
   elementosEnMapa = (datos.elementos || []).filter(function (elemento) { return buscarTipo(elemento.tipoId); });
   siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, 0) + 1;
   idSeleccionado = null;
   aplicarFondo();
+  aplicarPlano();
   dibujarMapa();
   mostrarPropiedades();
 }
@@ -1388,10 +1609,10 @@ function descargarArchivo(nombreArchivo, direccion) {
 }
 
 // Dibuja el mapa completo en un <canvas> y lo descarga como PNG.
-// Es "async" porque primero hay que esperar a que carguen las imágenes de los símbolos.
+// Es "async" porque primero hay que esperar a que carguen las imágenes de los elementos.
 async function exportarComoImagen() {
-  const imagenesDeSimbolos = await Promise.all(elementosEnMapa.map(function (elemento) {
-    return buscarTipo(elemento.tipoId).forma === 'simbolo' ? cargarImagenDeSimbolo(elemento) : null;
+  const imagenesDeElementos = await Promise.all(elementosEnMapa.map(function (elemento) {
+    return seDibujaConSvg(buscarTipo(elemento.tipoId)) ? cargarImagenDeElemento(elemento) : null;
   }));
 
   const escala = 2; // el doble de píxeles, para que se vea nítido
@@ -1413,7 +1634,7 @@ async function exportarComoImagen() {
   contexto.restore();
 
   elementosEnMapa.forEach(function (elemento, indice) {
-    dibujarElementoEnCanvas(contexto, elemento, imagenesDeSimbolos[indice]);
+    dibujarElementoEnCanvas(contexto, elemento, imagenesDeElementos[indice]);
   });
 
   descargarArchivo(nombreDelMapa + '.png', canvas.toDataURL('image/png'));
@@ -1501,7 +1722,45 @@ function conectarEventos() {
     aplicarFondo();
   });
 
+  // Escala, cuadrícula e imán
+  campoMetrosPixel.addEventListener('change', function () {
+    const valor = Number(campoMetrosPixel.value);
+    if (valor > 0) {
+      planoConfig.metrosPorPixel = valor;
+      dibujarMapa();
+    }
+    aplicarPlano();
+  });
+  campoMostrarCuadricula.addEventListener('change', function () {
+    planoConfig.cuadriculaVisible = campoMostrarCuadricula.checked;
+    aplicarPlano();
+  });
+  campoTamanoCuadricula.addEventListener('change', function () {
+    planoConfig.tamanoCuadricula = Number(campoTamanoCuadricula.value);
+    aplicarPlano();
+  });
+  campoIman.addEventListener('change', function () {
+    planoConfig.imanActivo = campoIman.checked;
+    aplicarPlano();
+  });
+  document.getElementById('boton-cuadricula').addEventListener('click', function () {
+    planoConfig.cuadriculaVisible = !planoConfig.cuadriculaVisible;
+    aplicarPlano();
+  });
+  document.getElementById('boton-iman').addEventListener('click', function () {
+    planoConfig.imanActivo = !planoConfig.imanActivo;
+    aplicarPlano();
+    mostrarAviso(planoConfig.imanActivo ? 'Imán activado: los elementos se alinean a la cuadrícula' : 'Imán desactivado');
+  });
+  document.querySelectorAll('[data-herramienta]').forEach(function (boton) {
+    boton.addEventListener('click', function () { cambiarHerramienta(boton.dataset.herramienta); });
+  });
+
   // Propiedades del elemento seleccionado
+  campoMostrarArea.addEventListener('change', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.mostrarArea = campoMostrarArea.checked; });
+  });
+  document.getElementById('boton-calibrar').addEventListener('click', calibrarConCota);
   campoTexto.addEventListener('input', function () {
     cambiarElementoSeleccionado(function (elemento) { elemento.texto = campoTexto.value; });
   });
@@ -1540,6 +1799,9 @@ function conectarEventos() {
   // Teclado: Suprimir quita el elemento; R gira 15° (Mayúsculas + R, al otro lado)
   document.addEventListener('keydown', function (evento) {
     const escribiendo = evento.target.tagName === 'INPUT';
+    if (evento.key === 'Escape') {
+      cambiarHerramienta('seleccionar');
+    }
     if (!idSeleccionado || escribiendo) {
       return;
     }
@@ -1584,6 +1846,8 @@ function iniciarAplicacion() {
   mostrarCategorias();
   mostrarGaleria();
   aplicarFondo();
+  aplicarPlano();
+  cambiarHerramienta('seleccionar');
   dibujarMapa();
   mostrarPropiedades();
   conectarEventos();

@@ -32,10 +32,19 @@
 
     <!-- ===== Centro: el mapa ===== -->
     <main class="zona-mapa">
+      <div class="barra-herramientas">
+        <button class="herramienta" data-herramienta="seleccionar" title="Seleccionar y mover elementos">Seleccionar</button>
+        <button class="herramienta" data-herramienta="medir" title="Arrastra sobre el mapa para medir">Medir</button>
+        <span class="separador"></span>
+        <button class="herramienta" id="boton-cuadricula" title="Mostrar u ocultar la cuadrícula">Cuadrícula</button>
+        <button class="herramienta" id="boton-iman" title="Alinear los elementos a la cuadrícula">Imán</button>
+      </div>
+
       <div id="contenedor-lienzo" class="contenedor-lienzo">
         <div id="marco-lienzo" class="marco-lienzo">
           <div id="lienzo" class="lienzo">
             <img id="imagen-mapa" class="imagen-mapa" alt="Mapa base de Siloé" draggable="false">
+            <div id="capa-cuadricula" class="capa-cuadricula" hidden></div>
             <div id="capa-elementos" class="capa-elementos"></div>
           </div>
         </div>
@@ -66,6 +75,30 @@
           <input type="checkbox" id="campo-tenido">
           Teñir el mapa con el color de fondo
         </label>
+
+        <h2 class="titulo-panel titulo-seccion">Escala y cuadrícula</h2>
+        <label class="campo">
+          Metros que mide 1 píxel del mapa
+          <input type="number" id="campo-metros-pixel" class="campo-texto" min="0.01" step="0.01">
+        </label>
+        <p class="ayuda">Es un valor estimado. Para calibrarlo, usa <strong>Medir</strong> sobre una distancia que conozcas y escribe su medida real en el panel de la cota.</p>
+        <label class="campo campo-casilla">
+          <input type="checkbox" id="campo-mostrar-cuadricula">
+          Mostrar cuadrícula
+        </label>
+        <label class="campo">
+          <span>Tamaño de los cuadros: <strong id="valor-cuadricula-metros"></strong></span>
+          <select id="campo-tamano-cuadricula" class="campo-texto">
+            <option value="10">10 píxeles</option>
+            <option value="20">20 píxeles</option>
+            <option value="50">50 píxeles</option>
+            <option value="100">100 píxeles</option>
+          </select>
+        </label>
+        <label class="campo campo-casilla">
+          <input type="checkbox" id="campo-iman">
+          Imán: alinear los elementos a la cuadrícula
+        </label>
         <p class="ayuda">Toca un elemento del mapa para moverlo, cambiar su tamaño, color o texto.</p>
       </section>
 
@@ -76,6 +109,23 @@
           Texto
           <input type="text" id="campo-texto" class="campo-texto">
         </label>
+
+        <div class="campo" id="grupo-area">
+          <span>Área: <strong id="valor-area"></strong></span>
+          <label class="campo-casilla">
+            <input type="checkbox" id="campo-mostrar-area">
+            Mostrar el área en el mapa
+          </label>
+        </div>
+
+        <div class="campo" id="grupo-medida">
+          <span>Medida: <strong id="valor-medida"></strong></span>
+          <label class="campo">
+            ¿Cuánto mide en la realidad? (metros)
+            <input type="text" id="campo-medida-real" class="campo-texto" inputmode="decimal" placeholder="Por ejemplo: 25">
+          </label>
+          <button id="boton-calibrar" class="boton">Calibrar la escala con esta cota</button>
+        </div>
 
         <label class="campo" id="grupo-color">
           Color
