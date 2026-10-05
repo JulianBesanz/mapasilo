@@ -171,6 +171,9 @@ let herramienta = 'seleccionar';   // 'seleccionar', 'medir' o 'dibujar'
 let dibujoEnCurso = null;          // los puntos de un trazo o zona que se está dibujando
 let medicionEnCurso = null;        // la cota que se está dibujando con la herramienta Medir
 
+// Datos de la hoja de infografía (ventana Exportar)
+let hojaConfig = { formato: 'carta', calidad: 150, titulo: '', autor: '', fecha: '', leyenda: true };
+
 // Todas las capas empiezan visibles y sin bloquear
 function crearEstadoCapasInicial() {
   const estado = {};
@@ -492,6 +495,14 @@ const campoTipoTrazo = document.getElementById('campo-tipo-trazo');
 const campoSuavizarDibujo = document.getElementById('campo-suavizar-dibujo');
 const campoSuavizar = document.getElementById('campo-suavizar');
 const campoGrosor = document.getElementById('campo-grosor');
+const campoFormatoHoja = document.getElementById('campo-formato-hoja');
+const campoCalidadHoja = document.getElementById('campo-calidad-hoja');
+const campoTituloHoja = document.getElementById('campo-titulo-hoja');
+const campoAutorHoja = document.getElementById('campo-autor-hoja');
+const campoFechaHoja = document.getElementById('campo-fecha-hoja');
+const campoLeyendaHoja = document.getElementById('campo-leyenda-hoja');
+const hojaParaImprimir = document.getElementById('hoja-para-imprimir');
+const estiloPagina = document.getElementById('estilo-pagina');
 
 
 /* =============================================================
@@ -1893,6 +1904,7 @@ function obtenerDatosDelMapa() {
     fondo: Object.assign({}, fondoDelMapa),
     plano: Object.assign({}, planoConfig),
     capas: JSON.parse(JSON.stringify(estadoCapas)),
+    hoja: Object.assign({}, hojaConfig),
     elementos: elementosEnMapa.map(function (elemento) { return Object.assign({}, elemento); })
   };
 }
@@ -1902,6 +1914,7 @@ function cargarDatosDelMapa(datos) {
   fondoDelMapa = Object.assign({ color: '#ffffff', visibilidad: 100, tenido: false }, datos.fondo);
   planoConfig = Object.assign({ metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false }, datos.plano);
   estadoCapas = Object.assign(crearEstadoCapasInicial(), datos.capas);
+  hojaConfig = Object.assign({ formato: 'carta', calidad: 150, titulo: '', autor: '', fecha: '', leyenda: true }, datos.hoja);
   // Ignoramos elementos cuyo tipo ya no exista en el catálogo
   elementosEnMapa = (datos.elementos || []).filter(function (elemento) { return buscarTipo(elemento.tipoId); });
   siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, 0) + 1;
@@ -2011,20 +2024,9 @@ function descargarArchivo(nombreArchivo, direccion) {
   enlace.remove();
 }
 
-// Dibuja el mapa completo en un <canvas> y lo descarga como PNG.
-// Es "async" porque primero hay que esperar a que carguen las imágenes de los elementos.
-async function exportarComoImagen() {
-  const imagenesDeElementos = await Promise.all(elementosEnMapa.map(function (elemento) {
-    return seDibujaConSvg(buscarTipo(elemento.tipoId)) ? cargarImagenDeElemento(elemento) : null;
-  }));
-
-  const escala = 2; // el doble de píxeles, para que se vea nítido
-  const canvas = document.createElement('canvas');
-  canvas.width = ANCHO_LIENZO * escala;
-  canvas.height = ALTO_LIENZO * escala;
-  const contexto = canvas.getContext('2d');
-  contexto.scale(escala, escala);
-
+// Dibuja el mapa (fondo, imagen base y elementos visibles) en un canvas,
+// en las mismas coordenadas del lienzo: de 0 a 898 de ancho y de 0 a 730 de alto.
+function dibujarMapaEnCanvas(contexto, imagenesDeElementos) {
   contexto.fillStyle = fondoDelMapa.color;
   contexto.fillRect(0, 0, ANCHO_LIENZO, ALTO_LIENZO);
 
@@ -2042,15 +2044,320 @@ async function exportarComoImagen() {
     }
     dibujarElementoEnCanvas(contexto, elemento, imagenesDeElementos[indice]);
   });
+}
 
-  descargarArchivo(nombreDelMapa + '.png', canvas.toDataURL('image/png'));
+function cargarImagenesDelMapa() {
+  return Promise.all(elementosEnMapa.map(function (elemento) {
+    return seDibujaConSvg(buscarTipo(elemento.tipoId)) ? cargarImagenDeElemento(elemento) : null;
+  }));
+}
+
+// --- Hoja de infografía: el mapa con su rótulo, norte, escala y leyenda ---
+
+// Tamaños de papel en milímetros, en horizontal
+const FORMATOS_HOJA = {
+  carta: { nombre: 'Carta', ancho: 279.4, alto: 215.9, tamanoPagina: 'letter landscape' },
+  a3: { nombre: 'A3', ancho: 420, alto: 297, tamanoPagina: 'A3 landscape' }
+};
+
+// Lee lo que la persona escribió en la ventana Exportar
+function leerDatosDeHoja() {
+  hojaConfig = {
+    formato: campoFormatoHoja.value,
+    calidad: Number(campoCalidadHoja.value),
+    titulo: campoTituloHoja.value.trim(),
+    autor: campoAutorHoja.value.trim(),
+    fecha: campoFechaHoja.value,
+    leyenda: campoLeyendaHoja.checked
+  };
+}
+
+function mostrarDatosDeHoja() {
+  campoFormatoHoja.value = hojaConfig.formato;
+  campoCalidadHoja.value = String(hojaConfig.calidad);
+  campoTituloHoja.value = hojaConfig.titulo || nombreDelMapa;
+  campoAutorHoja.value = hojaConfig.autor;
+  campoFechaHoja.value = hojaConfig.fecha || new Date().toISOString().slice(0, 10);
+  campoLeyendaHoja.checked = hojaConfig.leyenda;
+  document.getElementById('grupo-datos-hoja').hidden = hojaConfig.formato === 'mapa';
+}
+
+// Escala numérica de la hoja: cuántos milímetros reales caben en 1 mm de papel.
+// Se redondea a una escala de las que se usan en planos (1:500, 1:1.000, 1:2.500…).
+function calcularEscalaNumerica(milimetrosPorPixel) {
+  const exacta = planoConfig.metrosPorPixel * 1000 / milimetrosPorPixel;
+  const normales = [100, 200, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000, 15000, 20000, 25000, 50000];
+  let mejor = normales[0];
+  normales.forEach(function (valor) {
+    if (Math.abs(Math.log(valor / exacta)) < Math.abs(Math.log(mejor / exacta))) {
+      mejor = valor;
+    }
+  });
+  return { exacta: exacta, redondeada: mejor };
+}
+
+// Los tipos de elementos que aparecen en el mapa (en capas visibles), sin repetir,
+// en el orden del catálogo. Los textos, cotas y escalas no van en la leyenda.
+function tiposParaLeyenda() {
+  const usados = {};
+  elementosEnMapa.forEach(function (elemento) {
+    if (capaDelElemento(elemento).visible) {
+      usados[elemento.tipoId] = true;
+    }
+  });
+  return CATALOGO_ELEMENTOS.filter(function (tipo) {
+    return usados[tipo.id] && tipo.forma !== 'texto' && tipo.forma !== 'escala' && tipo.forma !== 'cota';
+  });
+}
+
+// Una muestra de cada tipo para la leyenda: vías y redes cortas, zonas pequeñas
+function crearMuestraDeLeyenda(tipo) {
+  const muestra = crearDatosElemento(tipo, 0, 0);
+  if (tipo.forma === 'linea') {
+    muestra.ancho = 90;
+    muestra.alto = Math.max(6, Math.min(tipo.alto, 22));
+  }
+  if (tipo.forma === 'zona') {
+    muestra.ancho = 90;
+    muestra.alto = 60;
+  }
+  if (tipo.forma === 'flecha') {
+    muestra.ancho = 90;
+    muestra.alto = 45;
+  }
+  // Si el mapa usa otro color para ese tipo, la leyenda muestra el primero que encuentre
+  const enMapa = elementosEnMapa.find(function (elemento) { return elemento.tipoId === tipo.id; });
+  if (enMapa) {
+    muestra.color = enMapa.color;
+  }
+  return muestra;
+}
+
+// Parte un texto en renglones que quepan en "anchoMaximo"
+function partirEnRenglones(contexto, texto, anchoMaximo) {
+  const palabras = texto.split(' ');
+  const renglones = [];
+  let renglon = '';
+  palabras.forEach(function (palabra) {
+    const prueba = renglon ? renglon + ' ' + palabra : palabra;
+    if (contexto.measureText(prueba).width > anchoMaximo && renglon) {
+      renglones.push(renglon);
+      renglon = palabra;
+    } else {
+      renglon = prueba;
+    }
+  });
+  renglones.push(renglon);
+  return renglones;
+}
+
+// Dibuja una imagen dentro de una caja sin deformarla (centrada)
+function dibujarImagenEnCaja(contexto, imagen, x, y, ancho, alto) {
+  const factor = Math.min(ancho / imagen.width, alto / imagen.height);
+  const anchoFinal = imagen.width * factor;
+  const altoFinal = imagen.height * factor;
+  contexto.drawImage(imagen, x + (ancho - anchoFinal) / 2, y + (alto - altoFinal) / 2, anchoFinal, altoFinal);
+}
+
+function textoEnHoja(contexto, texto, x, y, tamano, peso, color, alineacion) {
+  contexto.font = peso + ' ' + tamano + 'px ' + FUENTE_TEXTOS;
+  contexto.fillStyle = color;
+  contexto.textAlign = alineacion || 'left';
+  contexto.textBaseline = 'alphabetic';
+  contexto.fillText(texto, x, y);
+}
+
+// Escala gráfica dibujada en milímetros de papel
+function dibujarEscalaGraficaEnHoja(contexto, x, y, anchoDisponible, escala) {
+  // ¿Cuántos metros reales caben en el ancho disponible? Elegimos un número redondo.
+  const metrosDisponibles = anchoDisponible * escala / 1000;
+  const opciones = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  let metros = opciones[0];
+  opciones.forEach(function (valor) {
+    if (valor <= metrosDisponibles * 0.9) {
+      metros = valor;
+    }
+  });
+  const largo = metros * 1000 / escala;
+  for (let i = 0; i < 4; i++) {
+    contexto.fillStyle = i % 2 === 0 ? TRAZO : '#ffffff';
+    contexto.fillRect(x + i * largo / 4, y, largo / 4, 2.2);
+  }
+  contexto.lineWidth = 0.3;
+  contexto.strokeStyle = TRAZO;
+  contexto.strokeRect(x, y, largo, 2.2);
+  textoEnHoja(contexto, '0', x, y - 1.2, 2.6, 500, TRAZO, 'center');
+  textoEnHoja(contexto, String(metros / 2), x + largo / 2, y - 1.2, 2.6, 500, TRAZO, 'center');
+  textoEnHoja(contexto, formatearMetros(metros), x + largo, y - 1.2, 2.6, 500, TRAZO, 'center');
+}
+
+// Arma la hoja completa en un canvas. Se dibuja en milímetros y luego se
+// multiplica por los píxeles por milímetro de la calidad elegida (150 o 300 ppp).
+async function crearCanvasDeHoja() {
+  const formato = FORMATOS_HOJA[hojaConfig.formato];
+  const pixelesPorMm = hojaConfig.calidad / 25.4;
+  const tipos = hojaConfig.leyenda ? tiposParaLeyenda() : [];
+  const tipoNorte = buscarTipo('norte');
+
+  const imagenesDeElementos = await cargarImagenesDelMapa();
+  const imagenesDeLeyenda = await Promise.all(tipos.map(function (tipo) {
+    return cargarImagenDeElemento(crearMuestraDeLeyenda(tipo));
+  }));
+  const imagenNorte = await cargarImagenDeElemento(crearDatosElemento(tipoNorte, 0, 0));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(formato.ancho * pixelesPorMm);
+  canvas.height = Math.round(formato.alto * pixelesPorMm);
+  const contexto = canvas.getContext('2d');
+  contexto.scale(pixelesPorMm, pixelesPorMm);
+  contexto.fillStyle = '#ffffff';
+  contexto.fillRect(0, 0, formato.ancho, formato.alto);
+
+  // Medidas de la hoja (mm): margen, columna del rótulo a la derecha y área del mapa
+  const margen = 10;
+  const separacion = 5;
+  const anchoColumna = Math.round(formato.ancho * 0.24);
+  const xColumna = formato.ancho - margen - anchoColumna;
+  const anchoArea = xColumna - separacion - margen;
+  const altoArea = formato.alto - margen * 2;
+
+  // El mapa se ajusta al área sin deformarse
+  const milimetrosPorPixel = Math.min(anchoArea / ANCHO_LIENZO, altoArea / ALTO_LIENZO);
+  const anchoMapa = ANCHO_LIENZO * milimetrosPorPixel;
+  const altoMapa = ALTO_LIENZO * milimetrosPorPixel;
+  const xMapa = margen + (anchoArea - anchoMapa) / 2;
+  const yMapa = margen + (altoArea - altoMapa) / 2;
+  contexto.save();
+  contexto.beginPath();
+  contexto.rect(xMapa, yMapa, anchoMapa, altoMapa);
+  contexto.clip();
+  contexto.translate(xMapa, yMapa);
+  contexto.scale(milimetrosPorPixel, milimetrosPorPixel);
+  dibujarMapaEnCanvas(contexto, imagenesDeElementos);
+  contexto.restore();
+  contexto.lineWidth = 0.35;
+  contexto.strokeStyle = TRAZO;
+  contexto.strokeRect(xMapa, yMapa, anchoMapa, altoMapa);
+
+  // Marco de la columna
+  const yColumna = margen;
+  const altoColumna = formato.alto - margen * 2;
+  contexto.strokeRect(xColumna, yColumna, anchoColumna, altoColumna);
+  const relleno = 4;
+  const xTexto = xColumna + relleno;
+  const anchoTexto = anchoColumna - relleno * 2;
+
+  // Norte y escala, arriba
+  const escala = calcularEscalaNumerica(milimetrosPorPixel);
+  if (imagenNorte) {
+    dibujarImagenEnCaja(contexto, imagenNorte, xTexto, yColumna + relleno, 16, 16);
+  }
+  textoEnHoja(contexto, 'Escala 1:' + escala.redondeada.toLocaleString('es-CO'), xTexto + 20, yColumna + relleno + 6, 3.6, 700, TRAZO);
+  textoEnHoja(contexto, 'Aprox. en ' + formato.nombre + ' horizontal', xTexto + 20, yColumna + relleno + 10.5, 2.6, 500, '#6b7280');
+  dibujarEscalaGraficaEnHoja(contexto, xTexto + 1, yColumna + relleno + 22, anchoTexto - 6, escala.exacta);
+  let y = yColumna + relleno + 30;
+  contexto.beginPath();
+  contexto.moveTo(xColumna, y);
+  contexto.lineTo(xColumna + anchoColumna, y);
+  contexto.stroke();
+
+  // Rótulo (cajetín), abajo: título, autor y fecha
+  const altoRotulo = 46;
+  const yRotulo = yColumna + altoColumna - altoRotulo;
+  contexto.beginPath();
+  contexto.moveTo(xColumna, yRotulo);
+  contexto.lineTo(xColumna + anchoColumna, yRotulo);
+  contexto.stroke();
+  contexto.font = '800 6px ' + FUENTE_TEXTOS;
+  const renglonesTitulo = partirEnRenglones(contexto, hojaConfig.titulo || nombreDelMapa, anchoTexto).slice(0, 3);
+  let yTitulo = yRotulo + relleno + 5.5;
+  renglonesTitulo.forEach(function (renglon) {
+    textoEnHoja(contexto, renglon, xTexto, yTitulo, 6, 800, TRAZO);
+    yTitulo += 7;
+  });
+  const fechaTexto = hojaConfig.fecha
+    ? new Date(hojaConfig.fecha + 'T12:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const filas = [['Autor', hojaConfig.autor || '—'], ['Fecha', fechaTexto || '—']];
+  let yFila = yRotulo + altoRotulo - relleno - (filas.length - 1) * 7;
+  filas.forEach(function (fila) {
+    textoEnHoja(contexto, fila[0].toUpperCase(), xTexto, yFila - 3.4, 2.2, 600, '#6b7280');
+    textoEnHoja(contexto, fila[1], xTexto, yFila, 3.2, 600, TRAZO);
+    yFila += 7;
+  });
+
+  // Leyenda en el espacio del medio. Si no cabe en una columna, usa dos y letra más pequeña.
+  if (tipos.length > 0) {
+    y += 7;
+    textoEnHoja(contexto, 'LEYENDA', xTexto, y, 3.4, 800, TRAZO);
+    y += 3;
+    const espacio = yRotulo - y - 3;
+    let columnas = 1;
+    let altoFila = 8;
+    if (tipos.length * altoFila > espacio) {
+      columnas = 2;
+      altoFila = Math.min(8, espacio / Math.ceil(tipos.length / 2));
+    }
+    const porColumna = Math.ceil(tipos.length / columnas);
+    const anchoCelda = anchoTexto / columnas;
+    const tamanoLetra = Math.min(2.8, altoFila * 0.38);
+    tipos.forEach(function (tipo, indice) {
+      const columna = Math.floor(indice / porColumna);
+      const fila = indice % porColumna;
+      const xCelda = xTexto + columna * anchoCelda;
+      const yCelda = y + fila * altoFila;
+      if (imagenesDeLeyenda[indice]) {
+        dibujarImagenEnCaja(contexto, imagenesDeLeyenda[indice], xCelda, yCelda + altoFila * 0.12, altoFila * 1.25, altoFila * 0.76);
+      }
+      contexto.font = '500 ' + tamanoLetra + 'px ' + FUENTE_TEXTOS;
+      const nombre = partirEnRenglones(contexto, tipo.nombre, anchoCelda - altoFila * 1.5)[0];
+      textoEnHoja(contexto, nombre, xCelda + altoFila * 1.45, yCelda + altoFila * 0.5 + tamanoLetra * 0.35, tamanoLetra, 500, TRAZO);
+    });
+  }
+  return canvas;
+}
+
+async function crearCanvasDelMapaSolo() {
+  const imagenesDeElementos = await cargarImagenesDelMapa();
+  const escala = hojaConfig.calidad >= 300 ? 4 : 2; // más píxeles, más nítido
+  const canvas = document.createElement('canvas');
+  canvas.width = ANCHO_LIENZO * escala;
+  canvas.height = ALTO_LIENZO * escala;
+  const contexto = canvas.getContext('2d');
+  contexto.scale(escala, escala);
+  dibujarMapaEnCanvas(contexto, imagenesDeElementos);
+  return canvas;
+}
+
+// Descarga el PNG: solo el mapa o la hoja completa, según el formato elegido
+async function exportarComoImagen() {
+  leerDatosDeHoja();
+  mostrarAviso('Preparando la imagen…');
+  const canvas = hojaConfig.formato === 'mapa' ? await crearCanvasDelMapaSolo() : await crearCanvasDeHoja();
+  const sufijo = hojaConfig.formato === 'mapa' ? '' : ' - ' + FORMATOS_HOJA[hojaConfig.formato].nombre;
+  descargarArchivo(nombreDelMapa + sufijo + '.png', canvas.toDataURL('image/png'));
   mostrarAviso('Imagen descargada');
 }
 
-function imprimirMapa() {
+// Imprime el mapa tal como se ve, o la hoja completa en su tamaño de papel.
+// Para guardar como PDF, elige "Guardar como PDF" en la ventana de impresión.
+async function imprimirMapa() {
+  leerDatosDeHoja();
   dialogoExportar.close();
   seleccionarElemento(null);
+  if (hojaConfig.formato === 'mapa') {
+    window.print();
+    return;
+  }
+  mostrarAviso('Preparando la hoja…');
+  const canvas = await crearCanvasDeHoja();
+  hojaParaImprimir.src = canvas.toDataURL('image/png');
+  await hojaParaImprimir.decode();
+  estiloPagina.textContent = '@page { size: ' + FORMATOS_HOJA[hojaConfig.formato].tamanoPagina + '; margin: 0; }';
+  document.body.classList.add('imprimiendo-hoja');
   window.print();
+  document.body.classList.remove('imprimiendo-hoja');
+  estiloPagina.textContent = '';
 }
 
 function descargarArchivoDelMapa() {
@@ -2252,7 +2559,14 @@ function conectarEventos() {
   // Barra superior
   document.getElementById('boton-nuevo').addEventListener('click', empezarMapaNuevo);
   document.getElementById('boton-mis-mapas').addEventListener('click', abrirDialogoMapas);
-  document.getElementById('boton-exportar').addEventListener('click', function () { dialogoExportar.showModal(); });
+  document.getElementById('boton-exportar').addEventListener('click', function () {
+    mostrarDatosDeHoja();
+    dialogoExportar.showModal();
+  });
+  campoFormatoHoja.addEventListener('change', function () {
+    leerDatosDeHoja();
+    mostrarDatosDeHoja();
+  });
   document.getElementById('boton-vista-limpia').addEventListener('click', function () { cambiarVistaLimpia(true); });
   document.getElementById('boton-salir-vista-limpia').addEventListener('click', function () { cambiarVistaLimpia(false); });
 

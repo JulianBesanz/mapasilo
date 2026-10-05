@@ -240,7 +240,45 @@
   <!-- ===== Ventana: exportar ===== -->
   <dialog id="dialogo-exportar" class="dialogo">
     <h2>Exportar</h2>
-    <button id="boton-exportar-png" class="boton boton-principal boton-ancho">Imagen PNG (infografía)</button>
+    <div class="fila-campos">
+      <label class="campo">
+        Formato
+        <select id="campo-formato-hoja" class="campo-texto">
+          <option value="carta">Hoja carta horizontal</option>
+          <option value="a3">Hoja A3 horizontal</option>
+          <option value="mapa">Solo el mapa</option>
+        </select>
+      </label>
+      <label class="campo">
+        Calidad
+        <select id="campo-calidad-hoja" class="campo-texto">
+          <option value="150">Normal (150 ppp)</option>
+          <option value="300">Alta (300 ppp)</option>
+        </select>
+      </label>
+    </div>
+    <div id="grupo-datos-hoja">
+      <p class="ayuda">La hoja lleva el mapa, el norte, la escala, la leyenda y un rótulo con estos datos:</p>
+      <label class="campo">
+        Título
+        <input type="text" id="campo-titulo-hoja" class="campo-texto">
+      </label>
+      <div class="fila-campos">
+        <label class="campo">
+          Autor
+          <input type="text" id="campo-autor-hoja" class="campo-texto" placeholder="Tu nombre">
+        </label>
+        <label class="campo">
+          Fecha
+          <input type="date" id="campo-fecha-hoja" class="campo-texto">
+        </label>
+      </div>
+      <label class="campo campo-casilla">
+        <input type="checkbox" id="campo-leyenda-hoja">
+        Leyenda automática con los elementos usados
+      </label>
+    </div>
+    <button id="boton-exportar-png" class="boton boton-principal boton-ancho">Descargar imagen PNG</button>
     <button id="boton-imprimir" class="boton boton-ancho">Imprimir o guardar como PDF</button>
     <button id="boton-descargar-archivo" class="boton boton-ancho">Descargar archivo del mapa (.json)</button>
     <button id="boton-abrir-archivo" class="boton boton-ancho">Abrir archivo del mapa (.json)</button>
@@ -249,6 +287,10 @@
   </dialog>
 
   <div id="aviso" class="aviso"></div>
+
+  <!-- La hoja de infografía se pone aquí solo mientras se imprime -->
+  <img id="hoja-para-imprimir" class="hoja-para-imprimir" alt="">
+  <style id="estilo-pagina"></style>
 
   <!-- Si app.js no carga, este aviso se queda visible. app.js lo quita al arrancar. -->
   <div id="aviso-falta-app" style="position:fixed;inset:auto 16px 16px 16px;z-index:300;padding:14px 18px;border-radius:10px;background:#fef3c7;color:#78350f;font:15px system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.2)">
