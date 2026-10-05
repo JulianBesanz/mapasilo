@@ -505,6 +505,59 @@ body[data-herramienta="medir"] .capa-elementos {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
+/* ---------- Capas ---------- */
+.lista-capas {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.fila-capa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 0.85rem;
+}
+
+.fila-capa.capa-oculta .fila-capa-nombre {
+  color: var(--color-texto-suave);
+}
+
+.fila-capa-nombre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.boton-bloquear {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.boton-bloquear.activa {
+  border-color: var(--color-texto);
+  background: var(--color-texto);
+  color: #ffffff;
+}
+
+.texto-capa {
+  margin-top: -6px;
+}
+
+/* Los elementos de una capa bloqueada no se pueden tocar */
+.elemento-mapa.bloqueado {
+  pointer-events: none;
+}
+
 /* ---------- Ventanas (Mis mapas, Exportar) ---------- */
 .dialogo {
   width: min(420px, calc(100% - 32px));

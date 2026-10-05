@@ -42,6 +42,19 @@ const CATEGORIAS = [
   { id: 'anotacion', nombre: 'Textos y flechas' }
 ];
 
+// Capas del plano: agrupan los elementos para mostrarlos, ocultarlos o bloquearlos juntos.
+// Cada elemento del catálogo dice a qué capa pertenece con "capa".
+const CAPAS = [
+  { id: 'vegetacion', nombre: 'Vegetación' },
+  { id: 'edificaciones', nombre: 'Edificaciones' },
+  { id: 'equipamientos', nombre: 'Equipamientos y servicios' },
+  { id: 'electrica', nombre: 'Red eléctrica' },
+  { id: 'agua', nombre: 'Agua y alcantarillado' },
+  { id: 'vias', nombre: 'Vías y caminos' },
+  { id: 'zonas', nombre: 'Zonas y secciones' },
+  { id: 'anotaciones', nombre: 'Textos, cotas y flechas' }
+];
+
 // Cada elemento tiene una "forma" que dice cómo se dibuja:
 //   'simbolo' → un dibujo de la lista SIMBOLOS (sección 2), visto desde arriba
 //   'zona'    → un área de color: rectángulo o elipse
@@ -50,73 +63,73 @@ const CATEGORIAS = [
 //   'flecha'  → una flecha que puedes girar
 const CATALOGO_ELEMENTOS = [
   // --- Naturaleza ---
-  { id: 'arbol', nombre: 'Árbol', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbol', color: '#8fbf7f', tamano: 56 },
-  { id: 'arbol-frondoso', nombre: 'Árbol frondoso', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbolFrondoso', color: '#6fa86a', tamano: 70 },
-  { id: 'pino', nombre: 'Pino', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'pino', color: '#5b8f6a', tamano: 52 },
-  { id: 'palmera', nombre: 'Palmera', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'palmera', color: '#9cc27c', tamano: 56 },
-  { id: 'arbusto', nombre: 'Arbusto', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbusto', color: '#a6c98c', tamano: 40 },
-  { id: 'jardinera', nombre: 'Jardinera con flores', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'jardinera', color: '#e07a8a', tamano: 46 },
-  { id: 'roca', nombre: 'Roca', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'roca', color: '#b3aca1', tamano: 40 },
-  { id: 'cesped', nombre: 'Césped / pasto', categoria: 'naturaleza', forma: 'zona', figura: 'rectangulo', color: '#9ccc65', ancho: 160, alto: 100 },
-  { id: 'lago', nombre: 'Lago o laguna', categoria: 'naturaleza', forma: 'zona', figura: 'elipse', color: '#7fb8d9', ancho: 140, alto: 90 },
+  { id: 'arbol', capa: 'vegetacion', nombre: 'Árbol', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbol', color: '#8fbf7f', tamano: 56 },
+  { id: 'arbol-frondoso', capa: 'vegetacion', nombre: 'Árbol frondoso', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbolFrondoso', color: '#6fa86a', tamano: 70 },
+  { id: 'pino', capa: 'vegetacion', nombre: 'Pino', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'pino', color: '#5b8f6a', tamano: 52 },
+  { id: 'palmera', capa: 'vegetacion', nombre: 'Palmera', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'palmera', color: '#9cc27c', tamano: 56 },
+  { id: 'arbusto', capa: 'vegetacion', nombre: 'Arbusto', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbusto', color: '#a6c98c', tamano: 40 },
+  { id: 'jardinera', capa: 'vegetacion', nombre: 'Jardinera con flores', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'jardinera', color: '#e07a8a', tamano: 46 },
+  { id: 'roca', capa: 'vegetacion', nombre: 'Roca', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'roca', color: '#b3aca1', tamano: 40 },
+  { id: 'cesped', capa: 'vegetacion', nombre: 'Césped / pasto', categoria: 'naturaleza', forma: 'zona', figura: 'rectangulo', color: '#9ccc65', ancho: 160, alto: 100 },
+  { id: 'lago', capa: 'agua', nombre: 'Lago o laguna', categoria: 'naturaleza', forma: 'zona', figura: 'elipse', color: '#7fb8d9', ancho: 140, alto: 90 },
 
   // --- Viviendas y comunidad ---
-  { id: 'casa', nombre: 'Casa (cuatro aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casa', color: '#d9a37a', tamano: 48 },
-  { id: 'casa-dos-aguas', nombre: 'Casa (dos aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaDosAguas', color: '#c98f6b', tamano: 48 },
-  { id: 'casa-patio', nombre: 'Casa con patio', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaPatio', color: '#dcb08a', tamano: 56 },
-  { id: 'manzana', nombre: 'Grupo de casas', categoria: 'comercio', forma: 'simbolo', simbolo: 'manzana', color: '#d39b74', tamano: 70 },
-  { id: 'edificio', nombre: 'Edificio', categoria: 'comercio', forma: 'simbolo', simbolo: 'edificio', color: '#b9c0c7', tamano: 64 },
-  { id: 'construccion', nombre: 'Vivienda en construcción', categoria: 'comercio', forma: 'simbolo', simbolo: 'construccion', color: '#8a8f94', tamano: 48 },
-  { id: 'tienda', nombre: 'Tienda', categoria: 'comercio', forma: 'simbolo', simbolo: 'tienda', color: '#e08e45', tamano: 40 },
-  { id: 'centro-comercial', nombre: 'Centro comercial', categoria: 'comercio', forma: 'simbolo', simbolo: 'centroComercial', color: '#b5651d', tamano: 44 },
-  { id: 'iglesia', nombre: 'Iglesia', categoria: 'comercio', forma: 'simbolo', simbolo: 'iglesia', color: '#7d6b9d', tamano: 40 },
-  { id: 'escuela', nombre: 'Escuela', categoria: 'comercio', forma: 'simbolo', simbolo: 'escuela', color: '#3d7ea6', tamano: 40 },
-  { id: 'hospital', nombre: 'Hospital / puesto de salud', categoria: 'comercio', forma: 'simbolo', simbolo: 'hospital', color: '#c94c4c', tamano: 40 },
-  { id: 'cancha', nombre: 'Cancha', categoria: 'comercio', forma: 'simbolo', simbolo: 'cancha', color: '#6fae6a', tamano: 80 },
-  { id: 'parque-infantil', nombre: 'Parque infantil', categoria: 'comercio', forma: 'simbolo', simbolo: 'parqueInfantil', color: '#e3a33b', tamano: 40 },
-  { id: 'teleferico', nombre: 'Estación de cable', categoria: 'comercio', forma: 'simbolo', simbolo: 'teleferico', color: '#2f6f8f', tamano: 40 },
-  { id: 'parada-bus', nombre: 'Parada de bus', categoria: 'comercio', forma: 'simbolo', simbolo: 'paradaBus', color: '#2e8b57', tamano: 36 },
+  { id: 'casa', capa: 'edificaciones', nombre: 'Casa (cuatro aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casa', color: '#d9a37a', tamano: 48 },
+  { id: 'casa-dos-aguas', capa: 'edificaciones', nombre: 'Casa (dos aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaDosAguas', color: '#c98f6b', tamano: 48 },
+  { id: 'casa-patio', capa: 'edificaciones', nombre: 'Casa con patio', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaPatio', color: '#dcb08a', tamano: 56 },
+  { id: 'manzana', capa: 'edificaciones', nombre: 'Grupo de casas', categoria: 'comercio', forma: 'simbolo', simbolo: 'manzana', color: '#d39b74', tamano: 70 },
+  { id: 'edificio', capa: 'edificaciones', nombre: 'Edificio', categoria: 'comercio', forma: 'simbolo', simbolo: 'edificio', color: '#b9c0c7', tamano: 64 },
+  { id: 'construccion', capa: 'edificaciones', nombre: 'Vivienda en construcción', categoria: 'comercio', forma: 'simbolo', simbolo: 'construccion', color: '#8a8f94', tamano: 48 },
+  { id: 'tienda', capa: 'equipamientos', nombre: 'Tienda', categoria: 'comercio', forma: 'simbolo', simbolo: 'tienda', color: '#e08e45', tamano: 40 },
+  { id: 'centro-comercial', capa: 'equipamientos', nombre: 'Centro comercial', categoria: 'comercio', forma: 'simbolo', simbolo: 'centroComercial', color: '#b5651d', tamano: 44 },
+  { id: 'iglesia', capa: 'equipamientos', nombre: 'Iglesia', categoria: 'comercio', forma: 'simbolo', simbolo: 'iglesia', color: '#7d6b9d', tamano: 40 },
+  { id: 'escuela', capa: 'equipamientos', nombre: 'Escuela', categoria: 'comercio', forma: 'simbolo', simbolo: 'escuela', color: '#3d7ea6', tamano: 40 },
+  { id: 'hospital', capa: 'equipamientos', nombre: 'Hospital / puesto de salud', categoria: 'comercio', forma: 'simbolo', simbolo: 'hospital', color: '#c94c4c', tamano: 40 },
+  { id: 'cancha', capa: 'equipamientos', nombre: 'Cancha', categoria: 'comercio', forma: 'simbolo', simbolo: 'cancha', color: '#6fae6a', tamano: 80 },
+  { id: 'parque-infantil', capa: 'equipamientos', nombre: 'Parque infantil', categoria: 'comercio', forma: 'simbolo', simbolo: 'parqueInfantil', color: '#e3a33b', tamano: 40 },
+  { id: 'teleferico', capa: 'equipamientos', nombre: 'Estación de cable', categoria: 'comercio', forma: 'simbolo', simbolo: 'teleferico', color: '#2f6f8f', tamano: 40 },
+  { id: 'parada-bus', capa: 'equipamientos', nombre: 'Parada de bus', categoria: 'comercio', forma: 'simbolo', simbolo: 'paradaBus', color: '#2e8b57', tamano: 36 },
 
   // --- Infraestructura ---
-  { id: 'poste', nombre: 'Poste eléctrico', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'poste', color: '#e0a800', tamano: 22 },
-  { id: 'transformador', nombre: 'Transformador', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'transformador', color: '#f2c94c', tamano: 30 },
-  { id: 'planta-electrica', nombre: 'Planta eléctrica', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaElectrica', color: '#e8a33d', tamano: 56 },
-  { id: 'planta-agua', nombre: 'Planta de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaAgua', color: '#3b82c4', tamano: 56 },
-  { id: 'tanque-agua', nombre: 'Tanque de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'tanqueAgua', color: '#9cc3e6', tamano: 44 },
-  { id: 'alumbrado', nombre: 'Alumbrado público', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'alumbrado', color: '#f6c344', tamano: 30 },
-  { id: 'semaforo', nombre: 'Semáforo', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'semaforo', color: '#3a4245', tamano: 32 },
-  { id: 'antena', nombre: 'Antena', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'antena', color: '#6b7a86', tamano: 40 },
-  { id: 'reciclaje', nombre: 'Punto de reciclaje', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'reciclaje', color: '#4f9d69', tamano: 40 },
+  { id: 'poste', capa: 'electrica', nombre: 'Poste eléctrico', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'poste', color: '#e0a800', tamano: 22 },
+  { id: 'transformador', capa: 'electrica', nombre: 'Transformador', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'transformador', color: '#f2c94c', tamano: 30 },
+  { id: 'planta-electrica', capa: 'electrica', nombre: 'Planta eléctrica', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaElectrica', color: '#e8a33d', tamano: 56 },
+  { id: 'planta-agua', capa: 'agua', nombre: 'Planta de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaAgua', color: '#3b82c4', tamano: 56 },
+  { id: 'tanque-agua', capa: 'agua', nombre: 'Tanque de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'tanqueAgua', color: '#9cc3e6', tamano: 44 },
+  { id: 'alumbrado', capa: 'electrica', nombre: 'Alumbrado público', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'alumbrado', color: '#f6c344', tamano: 30 },
+  { id: 'semaforo', capa: 'vias', nombre: 'Semáforo', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'semaforo', color: '#3a4245', tamano: 32 },
+  { id: 'antena', capa: 'equipamientos', nombre: 'Antena', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'antena', color: '#6b7a86', tamano: 40 },
+  { id: 'reciclaje', capa: 'equipamientos', nombre: 'Punto de reciclaje', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'reciclaje', color: '#4f9d69', tamano: 40 },
 
   // --- Caminos y redes (colorCentro es la raya del medio) ---
-  { id: 'calle', nombre: 'Calle', categoria: 'caminos', forma: 'linea', color: '#a3a8ad', colorCentro: '#ffffff', ancho: 220, alto: 22 },
-  { id: 'avenida', nombre: 'Avenida', categoria: 'caminos', forma: 'linea', color: '#7b8187', colorCentro: '#f2c94c', ancho: 300, alto: 34 },
-  { id: 'camino', nombre: 'Camino peatonal', categoria: 'caminos', forma: 'linea', color: '#d8c3a0', colorCentro: null, ancho: 180, alto: 12 },
-  { id: 'red-electrica', nombre: 'Red eléctrica', categoria: 'caminos', forma: 'linea', color: '#e8a33d', colorCentro: '#2f3a37', ancho: 240, alto: 8 },
-  { id: 'tuberia-agua', nombre: 'Tubería de agua', categoria: 'caminos', forma: 'linea', color: '#3b82c4', colorCentro: '#bcd7ef', ancho: 240, alto: 10 },
-  { id: 'quebrada', nombre: 'Quebrada / río', categoria: 'caminos', forma: 'linea', color: '#7fb8d9', colorCentro: null, ancho: 260, alto: 16 },
-  { id: 'alcantarillado', nombre: 'Alcantarillado', categoria: 'caminos', forma: 'linea', color: '#7a5233', colorCentro: '#d6b48c', ancho: 240, alto: 10 },
+  { id: 'calle', capa: 'vias', nombre: 'Calle', categoria: 'caminos', forma: 'linea', color: '#a3a8ad', colorCentro: '#ffffff', ancho: 220, alto: 22 },
+  { id: 'avenida', capa: 'vias', nombre: 'Avenida', categoria: 'caminos', forma: 'linea', color: '#7b8187', colorCentro: '#f2c94c', ancho: 300, alto: 34 },
+  { id: 'camino', capa: 'vias', nombre: 'Camino peatonal', categoria: 'caminos', forma: 'linea', color: '#d8c3a0', colorCentro: null, ancho: 180, alto: 12 },
+  { id: 'red-electrica', capa: 'electrica', nombre: 'Red eléctrica', categoria: 'caminos', forma: 'linea', color: '#e8a33d', colorCentro: '#2f3a37', ancho: 240, alto: 8 },
+  { id: 'tuberia-agua', capa: 'agua', nombre: 'Tubería de agua', categoria: 'caminos', forma: 'linea', color: '#3b82c4', colorCentro: '#bcd7ef', ancho: 240, alto: 10 },
+  { id: 'quebrada', capa: 'agua', nombre: 'Quebrada / río', categoria: 'caminos', forma: 'linea', color: '#7fb8d9', colorCentro: null, ancho: 260, alto: 16 },
+  { id: 'alcantarillado', capa: 'agua', nombre: 'Alcantarillado', categoria: 'caminos', forma: 'linea', color: '#7a5233', colorCentro: '#d6b48c', ancho: 240, alto: 10 },
 
   // --- Zonas y secciones de color ---
-  { id: 'zona-residencial', nombre: 'Zona residencial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#e3a76f', ancho: 200, alto: 140 },
-  { id: 'zona-comercial', nombre: 'Zona comercial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#9b8ec4', ancho: 200, alto: 140 },
-  { id: 'zona-verde', nombre: 'Zona verde', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#7fb069', ancho: 180, alto: 130 },
-  { id: 'zona-riesgo', nombre: 'Zona de riesgo', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#d9534f', ancho: 180, alto: 130 },
-  { id: 'seccion-rectangular', nombre: 'Sección rectangular', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#6c9bd2', ancho: 200, alto: 140 },
-  { id: 'seccion-circular', nombre: 'Sección circular', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#5bb5a2', ancho: 160, alto: 160 },
+  { id: 'zona-residencial', capa: 'zonas', nombre: 'Zona residencial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#e3a76f', ancho: 200, alto: 140 },
+  { id: 'zona-comercial', capa: 'zonas', nombre: 'Zona comercial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#9b8ec4', ancho: 200, alto: 140 },
+  { id: 'zona-verde', capa: 'zonas', nombre: 'Zona verde', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#7fb069', ancho: 180, alto: 130 },
+  { id: 'zona-riesgo', capa: 'zonas', nombre: 'Zona de riesgo', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#d9534f', ancho: 180, alto: 130 },
+  { id: 'seccion-rectangular', capa: 'zonas', nombre: 'Sección rectangular', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#6c9bd2', ancho: 200, alto: 140 },
+  { id: 'seccion-circular', capa: 'zonas', nombre: 'Sección circular', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#5bb5a2', ancho: 160, alto: 160 },
 
   // --- Textos y flechas ---
-  { id: 'titulo', nombre: 'Título', categoria: 'anotacion', forma: 'texto', estiloTexto: 'titulo', color: '#1f2a2e', tamano: 40, textoInicial: 'Barrio Siloé' },
-  { id: 'subtitulo', nombre: 'Subtítulo', categoria: 'anotacion', forma: 'texto', estiloTexto: 'subtitulo', color: '#3a4a50', tamano: 24, textoInicial: 'Comuna 20 · Cali' },
-  { id: 'etiqueta', nombre: 'Etiqueta', categoria: 'anotacion', forma: 'texto', estiloTexto: 'etiqueta', color: '#1f2a2e', tamano: 16, textoInicial: 'Nombre del lugar' },
-  { id: 'nota', nombre: 'Nota', categoria: 'anotacion', forma: 'texto', estiloTexto: 'nota', color: '#1f2a2e', tamano: 16, textoInicial: 'Escribe una nota' },
-  { id: 'flecha', nombre: 'Flecha', categoria: 'anotacion', forma: 'flecha', figura: 'simple', color: '#c0392b', ancho: 120, alto: 60 },
-  { id: 'flecha-doble', nombre: 'Flecha doble', categoria: 'anotacion', forma: 'flecha', figura: 'doble', color: '#2f6f8f', ancho: 140, alto: 60 },
-  { id: 'punto-interes', nombre: 'Punto de interés', categoria: 'anotacion', forma: 'simbolo', simbolo: 'puntoInteres', color: '#d9534f', tamano: 40 },
-  { id: 'advertencia', nombre: 'Advertencia', categoria: 'anotacion', forma: 'simbolo', simbolo: 'advertencia', color: '#f2b134', tamano: 40 },
-  { id: 'norte', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 },
-  { id: 'escala-grafica', nombre: 'Escala gráfica', categoria: 'anotacion', forma: 'escala', color: '#2f3a37', tamano: 34 },
-  { id: 'cota', nombre: 'Cota (medida)', categoria: 'anotacion', forma: 'cota', color: '#2f3a37', ancho: 150, alto: 26 }
+  { id: 'titulo', capa: 'anotaciones', nombre: 'Título', categoria: 'anotacion', forma: 'texto', estiloTexto: 'titulo', color: '#1f2a2e', tamano: 40, textoInicial: 'Barrio Siloé' },
+  { id: 'subtitulo', capa: 'anotaciones', nombre: 'Subtítulo', categoria: 'anotacion', forma: 'texto', estiloTexto: 'subtitulo', color: '#3a4a50', tamano: 24, textoInicial: 'Comuna 20 · Cali' },
+  { id: 'etiqueta', capa: 'anotaciones', nombre: 'Etiqueta', categoria: 'anotacion', forma: 'texto', estiloTexto: 'etiqueta', color: '#1f2a2e', tamano: 16, textoInicial: 'Nombre del lugar' },
+  { id: 'nota', capa: 'anotaciones', nombre: 'Nota', categoria: 'anotacion', forma: 'texto', estiloTexto: 'nota', color: '#1f2a2e', tamano: 16, textoInicial: 'Escribe una nota' },
+  { id: 'flecha', capa: 'anotaciones', nombre: 'Flecha', categoria: 'anotacion', forma: 'flecha', figura: 'simple', color: '#c0392b', ancho: 120, alto: 60 },
+  { id: 'flecha-doble', capa: 'anotaciones', nombre: 'Flecha doble', categoria: 'anotacion', forma: 'flecha', figura: 'doble', color: '#2f6f8f', ancho: 140, alto: 60 },
+  { id: 'punto-interes', capa: 'anotaciones', nombre: 'Punto de interés', categoria: 'anotacion', forma: 'simbolo', simbolo: 'puntoInteres', color: '#d9534f', tamano: 40 },
+  { id: 'advertencia', capa: 'anotaciones', nombre: 'Advertencia', categoria: 'anotacion', forma: 'simbolo', simbolo: 'advertencia', color: '#f2b134', tamano: 40 },
+  { id: 'norte', capa: 'anotaciones', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 },
+  { id: 'escala-grafica', capa: 'anotaciones', nombre: 'Escala gráfica', categoria: 'anotacion', forma: 'escala', color: '#2f3a37', tamano: 34 },
+  { id: 'cota', capa: 'anotaciones', nombre: 'Cota (medida)', categoria: 'anotacion', forma: 'cota', color: '#2f3a37', ancho: 150, alto: 26 }
 ];
 
 // Cómo se ve cada tipo de texto
@@ -153,8 +166,18 @@ let categoriaActiva = 'todos';
 // Escala y ayudas de dibujo del plano.
 // metrosPorPixel es un valor estimado: calíbralo con una cota sobre una distancia conocida.
 let planoConfig = { metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false };
+let estadoCapas = crearEstadoCapasInicial();  // qué capas se ven y cuáles están bloqueadas
 let herramienta = 'seleccionar';   // 'seleccionar' o 'medir'
 let medicionEnCurso = null;        // la cota que se está dibujando con la herramienta Medir
+
+// Todas las capas empiezan visibles y sin bloquear
+function crearEstadoCapasInicial() {
+  const estado = {};
+  CAPAS.forEach(function (capa) {
+    estado[capa.id] = { visible: true, bloqueada: false };
+  });
+  return estado;
+}
 
 // Datos temporales mientras se arrastra algo
 let arrastreDesdePanel = null;   // un elemento que viene del panel
@@ -461,6 +484,7 @@ const campoTamanoCuadricula = document.getElementById('campo-tamano-cuadricula')
 const campoIman = document.getElementById('campo-iman');
 const campoMostrarArea = document.getElementById('campo-mostrar-area');
 const campoMedidaReal = document.getElementById('campo-medida-real');
+const listaCapas = document.getElementById('lista-capas');
 
 
 /* =============================================================
@@ -473,6 +497,16 @@ function buscarTipo(tipoId) {
 
 function buscarElemento(id) {
   return elementosEnMapa.find(function (elemento) { return elemento.id === id; });
+}
+
+function capaDelElemento(elemento) {
+  return estadoCapas[buscarTipo(elemento.tipoId).capa];
+}
+
+// Un elemento se puede tocar si su capa se ve y no está bloqueada
+function sePuedeEditar(elemento) {
+  const capa = capaDelElemento(elemento);
+  return capa.visible && !capa.bloqueada;
 }
 
 function buscarNodo(id) {
@@ -744,6 +778,9 @@ function crearManijas() {
 function refrescarNodo(nodo, elemento) {
   dibujarContenido(nodo, elemento, 'elemento-mapa');
   colocarNodo(nodo, elemento);
+  const capa = estadoCapas[buscarTipo(elemento.tipoId).capa];
+  nodo.hidden = !capa.visible;
+  nodo.classList.toggle('bloqueado', capa.bloqueada);
   if (elemento.id === idSeleccionado) {
     nodo.classList.add('seleccionado');
     nodo.appendChild(crearManijas());
@@ -1026,9 +1063,16 @@ function agregarElementoAlMapa(tipo, x, y) {
   const elemento = crearDatosElemento(tipo, Math.round(ajustarAlIman(x)), Math.round(ajustarAlIman(y)));
   elemento.id = siguienteId;
   siguienteId = siguienteId + 1;
+  // Si su capa estaba oculta o bloqueada, la activamos para que se vea el elemento nuevo
+  if (!sePuedeEditar(elemento)) {
+    estadoCapas[tipo.capa] = { visible: true, bloqueada: false };
+    mostrarAviso('Se activó la capa ' + buscarCapa(tipo.capa).nombre);
+    dibujarMapa();
+  }
   elementosEnMapa.push(elemento);
   capaElementos.appendChild(crearNodoEnMapa(elemento));
   seleccionarElemento(elemento.id);
+  mostrarCapas();
 }
 
 // Marca un elemento como elegido: le pone el marco con manijas y abre sus propiedades
@@ -1293,6 +1337,7 @@ function mostrarPropiedades() {
 
   const tipo = buscarTipo(elemento.tipoId);
   tituloElemento.textContent = tipo.nombre;
+  document.getElementById('texto-capa-elemento').textContent = 'Capa: ' + buscarCapa(tipo.capa).nombre;
 
   // Cada forma muestra solo los controles que tienen sentido para ella
   const tamanoUnico = usaTamanoUnico(tipo);
@@ -1410,12 +1455,14 @@ function duplicarElemento() {
   elementosEnMapa.push(copia);
   capaElementos.appendChild(crearNodoEnMapa(copia));
   seleccionarElemento(copia.id);
+  mostrarCapas();
 }
 
 function eliminarElemento() {
   elementosEnMapa = elementosEnMapa.filter(function (elemento) { return elemento.id !== idSeleccionado; });
   dibujarMapa();
   seleccionarElemento(null);
+  mostrarCapas();
 }
 
 
@@ -1432,6 +1479,68 @@ function aplicarFondo() {
   campoVisibilidad.value = fondoDelMapa.visibilidad;
   campoTenido.checked = fondoDelMapa.tenido;
   document.getElementById('valor-visibilidad').textContent = fondoDelMapa.visibilidad + '%';
+}
+
+function buscarCapa(capaId) {
+  return CAPAS.find(function (capa) { return capa.id === capaId; });
+}
+
+// Dibuja la lista de capas en el panel: casilla para verla y botón para bloquearla
+function mostrarCapas() {
+  listaCapas.innerHTML = '';
+  CAPAS.forEach(function (capa) {
+    const estado = estadoCapas[capa.id];
+    const cantidad = elementosEnMapa.filter(function (elemento) {
+      return buscarTipo(elemento.tipoId).capa === capa.id;
+    }).length;
+
+    const fila = document.createElement('li');
+    fila.className = 'fila-capa';
+    if (!estado.visible) {
+      fila.classList.add('capa-oculta');
+    }
+
+    const etiqueta = document.createElement('label');
+    etiqueta.className = 'fila-capa-nombre';
+    const casilla = document.createElement('input');
+    casilla.type = 'checkbox';
+    casilla.checked = estado.visible;
+    casilla.addEventListener('change', function () {
+      estado.visible = casilla.checked;
+      actualizarTrasCambiarCapas();
+    });
+    etiqueta.appendChild(casilla);
+    etiqueta.appendChild(document.createTextNode(' ' + capa.nombre + ' (' + cantidad + ')'));
+
+    const botonBloquear = document.createElement('button');
+    botonBloquear.className = 'boton-bloquear';
+    botonBloquear.textContent = estado.bloqueada ? 'Bloqueada' : 'Bloquear';
+    botonBloquear.classList.toggle('activa', estado.bloqueada);
+    botonBloquear.title = estado.bloqueada ? 'Desbloquear esta capa' : 'Bloquear: no se podrá mover ni editar';
+    botonBloquear.addEventListener('click', function () {
+      estado.bloqueada = !estado.bloqueada;
+      actualizarTrasCambiarCapas();
+    });
+
+    fila.appendChild(etiqueta);
+    fila.appendChild(botonBloquear);
+    listaCapas.appendChild(fila);
+  });
+}
+
+function actualizarTrasCambiarCapas() {
+  const elegido = buscarElemento(idSeleccionado);
+  if (elegido && !sePuedeEditar(elegido)) {
+    idSeleccionado = null;
+  }
+  dibujarMapa();
+  mostrarCapas();
+  mostrarPropiedades();
+}
+
+function mostrarTodasLasCapas() {
+  estadoCapas = crearEstadoCapasInicial();
+  actualizarTrasCambiarCapas();
 }
 
 // Muestra la cuadrícula y pone los valores de la escala en el panel
@@ -1492,6 +1601,7 @@ function obtenerDatosDelMapa() {
     fecha: new Date().toISOString(),
     fondo: Object.assign({}, fondoDelMapa),
     plano: Object.assign({}, planoConfig),
+    capas: JSON.parse(JSON.stringify(estadoCapas)),
     elementos: elementosEnMapa.map(function (elemento) { return Object.assign({}, elemento); })
   };
 }
@@ -1500,6 +1610,7 @@ function cargarDatosDelMapa(datos) {
   nombreDelMapa = datos.nombre || 'Mi mapa de Siloé';
   fondoDelMapa = Object.assign({ color: '#ffffff', visibilidad: 100, tenido: false }, datos.fondo);
   planoConfig = Object.assign({ metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false }, datos.plano);
+  estadoCapas = Object.assign(crearEstadoCapasInicial(), datos.capas);
   // Ignoramos elementos cuyo tipo ya no exista en el catálogo
   elementosEnMapa = (datos.elementos || []).filter(function (elemento) { return buscarTipo(elemento.tipoId); });
   siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, 0) + 1;
@@ -1507,6 +1618,7 @@ function cargarDatosDelMapa(datos) {
   aplicarFondo();
   aplicarPlano();
   dibujarMapa();
+  mostrarCapas();
   mostrarPropiedades();
 }
 
@@ -1634,6 +1746,9 @@ async function exportarComoImagen() {
   contexto.restore();
 
   elementosEnMapa.forEach(function (elemento, indice) {
+    if (!capaDelElemento(elemento).visible) {
+      return; // las capas ocultas no salen en la imagen
+    }
     dibujarElementoEnCanvas(contexto, elemento, imagenesDeElementos[indice]);
   });
 
@@ -1721,6 +1836,9 @@ function conectarEventos() {
     fondoDelMapa.tenido = campoTenido.checked;
     aplicarFondo();
   });
+
+  // Capas
+  document.getElementById('boton-mostrar-capas').addEventListener('click', mostrarTodasLasCapas);
 
   // Escala, cuadrícula e imán
   campoMetrosPixel.addEventListener('change', function () {
@@ -1849,6 +1967,7 @@ function iniciarAplicacion() {
   aplicarPlano();
   cambiarHerramienta('seleccionar');
   dibujarMapa();
+  mostrarCapas();
   mostrarPropiedades();
   conectarEventos();
   ajustarZoomALaPantalla();

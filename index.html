@@ -62,7 +62,12 @@
     <aside class="panel panel-propiedades">
 
       <section id="seccion-fondo">
-        <h2 class="titulo-panel">Fondo del mapa</h2>
+        <h2 class="titulo-panel">Capas</h2>
+        <ul id="lista-capas" class="lista-capas"></ul>
+        <button id="boton-mostrar-capas" class="boton boton-ancho">Mostrar y desbloquear todas</button>
+        <p class="ayuda">Las capas ocultas no salen en la imagen exportada. Así puedes sacar, por ejemplo, un plano solo de la red eléctrica.</p>
+
+        <h2 class="titulo-panel titulo-seccion">Fondo del mapa</h2>
         <label class="campo">
           Color de fondo
           <input type="color" id="campo-color-fondo" value="#ffffff">
@@ -104,6 +109,7 @@
 
       <section id="seccion-elemento" hidden>
         <h2 class="titulo-panel" id="titulo-elemento">Elemento</h2>
+        <p class="ayuda texto-capa" id="texto-capa-elemento"></p>
 
         <label class="campo" id="grupo-texto">
           Texto
