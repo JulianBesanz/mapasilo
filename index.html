@@ -38,6 +38,20 @@
         <span class="separador"></span>
         <button class="herramienta" id="boton-cuadricula" title="Mostrar u ocultar la cuadrícula">Cuadrícula</button>
         <button class="herramienta" id="boton-iman" title="Alinear los elementos a la cuadrícula">Imán</button>
+        <span class="separador"></span>
+        <select id="campo-tipo-trazo" class="selector-trazo" title="Qué quieres dibujar"></select>
+        <button class="herramienta" id="boton-dibujar" data-herramienta-dibujo title="Toca el mapa para poner los puntos">Dibujar</button>
+        <label class="casilla-herramienta" title="Une los puntos con curvas suaves">
+          <input type="checkbox" id="campo-suavizar-dibujo" checked>
+          Curva suave
+        </label>
+      </div>
+
+      <div id="barra-dibujo" class="barra-dibujo" hidden>
+        <span class="texto-barra-dibujo">Toca el mapa para poner puntos</span>
+        <button id="boton-deshacer-punto" class="boton">Quitar último punto</button>
+        <button id="boton-cancelar-dibujo" class="boton">Cancelar</button>
+        <button id="boton-terminar-dibujo" class="boton boton-principal">Terminar</button>
       </div>
 
       <div id="contenedor-lienzo" class="contenedor-lienzo">
@@ -46,6 +60,7 @@
             <img id="imagen-mapa" class="imagen-mapa" alt="Mapa base de Siloé" draggable="false">
             <div id="capa-cuadricula" class="capa-cuadricula" hidden></div>
             <div id="capa-elementos" class="capa-elementos"></div>
+            <svg id="guia-dibujo" class="guia-dibujo" viewBox="0 0 898 730" aria-hidden="true"></svg>
           </div>
         </div>
       </div>
@@ -132,6 +147,20 @@
           </label>
           <button id="boton-calibrar" class="boton">Calibrar la escala con esta cota</button>
         </div>
+
+        <div class="campo" id="grupo-largo">
+          <span>Largo: <strong id="valor-largo"></strong></span>
+        </div>
+
+        <label class="campo" id="grupo-grosor">
+          <span>Grosor: <strong id="valor-grosor"></strong></span>
+          <input type="range" id="campo-grosor" min="2" max="60">
+        </label>
+
+        <label class="campo campo-casilla" id="grupo-trazo">
+          <input type="checkbox" id="campo-suavizar">
+          Curva suave
+        </label>
 
         <label class="campo" id="grupo-color">
           Color
