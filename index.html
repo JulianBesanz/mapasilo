@@ -32,11 +32,39 @@
 
     <!-- ===== Centro: el mapa ===== -->
     <main class="zona-mapa">
+      <div class="barra-herramientas">
+        <button class="herramienta" data-herramienta="seleccionar" title="Seleccionar y mover elementos">Seleccionar</button>
+        <button class="herramienta" data-herramienta="medir" title="Arrastra sobre el mapa para medir">Medir</button>
+        <button class="herramienta" id="boton-varios" title="Tocar varios elementos para elegirlos juntos (o Mayúsculas + clic)">Varios</button>
+        <span class="separador"></span>
+        <button class="herramienta" id="boton-deshacer" title="Deshacer (Ctrl + Z)">Deshacer</button>
+        <button class="herramienta" id="boton-rehacer" title="Rehacer (Ctrl + Y)">Rehacer</button>
+        <span class="separador"></span>
+        <button class="herramienta" id="boton-cuadricula" title="Mostrar u ocultar la cuadrícula">Cuadrícula</button>
+        <button class="herramienta" id="boton-iman" title="Alinear los elementos a la cuadrícula">Imán</button>
+        <span class="separador"></span>
+        <select id="campo-tipo-trazo" class="selector-trazo" title="Qué quieres dibujar"></select>
+        <button class="herramienta" id="boton-dibujar" data-herramienta-dibujo title="Toca el mapa para poner los puntos">Dibujar</button>
+        <label class="casilla-herramienta" title="Une los puntos con curvas suaves">
+          <input type="checkbox" id="campo-suavizar-dibujo" checked>
+          Curva suave
+        </label>
+      </div>
+
+      <div id="barra-dibujo" class="barra-dibujo" hidden>
+        <span class="texto-barra-dibujo">Toca el mapa para poner puntos</span>
+        <button id="boton-deshacer-punto" class="boton">Quitar último punto</button>
+        <button id="boton-cancelar-dibujo" class="boton">Cancelar</button>
+        <button id="boton-terminar-dibujo" class="boton boton-principal">Terminar</button>
+      </div>
+
       <div id="contenedor-lienzo" class="contenedor-lienzo">
         <div id="marco-lienzo" class="marco-lienzo">
           <div id="lienzo" class="lienzo">
             <img id="imagen-mapa" class="imagen-mapa" alt="Mapa base de Siloé" draggable="false">
+            <div id="capa-cuadricula" class="capa-cuadricula" hidden></div>
             <div id="capa-elementos" class="capa-elementos"></div>
+            <svg id="guia-dibujo" class="guia-dibujo" viewBox="0 0 898 730" aria-hidden="true"></svg>
           </div>
         </div>
       </div>
@@ -53,7 +81,12 @@
     <aside class="panel panel-propiedades">
 
       <section id="seccion-fondo">
-        <h2 class="titulo-panel">Fondo del mapa</h2>
+        <h2 class="titulo-panel">Capas</h2>
+        <ul id="lista-capas" class="lista-capas"></ul>
+        <button id="boton-mostrar-capas" class="boton boton-ancho">Mostrar y desbloquear todas</button>
+        <p class="ayuda">Las capas ocultas no salen en la imagen exportada. Así puedes sacar, por ejemplo, un plano solo de la red eléctrica.</p>
+
+        <h2 class="titulo-panel titulo-seccion">Fondo del mapa</h2>
         <label class="campo">
           Color de fondo
           <input type="color" id="campo-color-fondo" value="#ffffff">
@@ -66,15 +99,76 @@
           <input type="checkbox" id="campo-tenido">
           Teñir el mapa con el color de fondo
         </label>
+
+        <h2 class="titulo-panel titulo-seccion">Escala y cuadrícula</h2>
+        <label class="campo">
+          Metros que mide 1 píxel del mapa
+          <input type="number" id="campo-metros-pixel" class="campo-texto" min="0.01" step="0.01">
+        </label>
+        <p class="ayuda">Es un valor estimado. Para calibrarlo, usa <strong>Medir</strong> sobre una distancia que conozcas y escribe su medida real en el panel de la cota.</p>
+        <label class="campo campo-casilla">
+          <input type="checkbox" id="campo-mostrar-cuadricula">
+          Mostrar cuadrícula
+        </label>
+        <label class="campo">
+          <span>Tamaño de los cuadros: <strong id="valor-cuadricula-metros"></strong></span>
+          <select id="campo-tamano-cuadricula" class="campo-texto">
+            <option value="10">10 píxeles</option>
+            <option value="20">20 píxeles</option>
+            <option value="50">50 píxeles</option>
+            <option value="100">100 píxeles</option>
+          </select>
+        </label>
+        <label class="campo campo-casilla">
+          <input type="checkbox" id="campo-iman">
+          Imán: alinear los elementos a la cuadrícula
+        </label>
         <p class="ayuda">Toca un elemento del mapa para moverlo, cambiar su tamaño, color o texto.</p>
       </section>
 
       <section id="seccion-elemento" hidden>
         <h2 class="titulo-panel" id="titulo-elemento">Elemento</h2>
+        <p class="ayuda texto-capa" id="texto-capa-elemento"></p>
 
         <label class="campo" id="grupo-texto">
           Texto
           <input type="text" id="campo-texto" class="campo-texto">
+        </label>
+
+        <div class="campo" id="grupo-area">
+          <span>Área: <strong id="valor-area"></strong></span>
+          <label class="campo-casilla">
+            <input type="checkbox" id="campo-mostrar-area">
+            Mostrar el área en el mapa
+          </label>
+        </div>
+
+        <label class="campo" id="grupo-trama">
+          Trama (rayado)
+          <select id="campo-trama" class="campo-texto"></select>
+        </label>
+
+        <div class="campo" id="grupo-medida">
+          <span>Medida: <strong id="valor-medida"></strong></span>
+          <label class="campo">
+            ¿Cuánto mide en la realidad? (metros)
+            <input type="text" id="campo-medida-real" class="campo-texto" inputmode="decimal" placeholder="Por ejemplo: 25">
+          </label>
+          <button id="boton-calibrar" class="boton">Calibrar la escala con esta cota</button>
+        </div>
+
+        <div class="campo" id="grupo-largo">
+          <span>Largo: <strong id="valor-largo"></strong></span>
+        </div>
+
+        <label class="campo" id="grupo-grosor">
+          <span>Grosor: <strong id="valor-grosor"></strong></span>
+          <input type="range" id="campo-grosor" min="2" max="60">
+        </label>
+
+        <label class="campo campo-casilla" id="grupo-trazo">
+          <input type="checkbox" id="campo-suavizar">
+          Curva suave
         </label>
 
         <label class="campo" id="grupo-color">
@@ -96,6 +190,24 @@
           <span><span id="nombre-alto">Alto</span>: <strong id="valor-alto"></strong></span>
           <input type="range" id="campo-alto" min="2" max="700">
         </label>
+
+        <div class="campo" id="grupo-alinear" hidden>
+          <span>Alinear</span>
+          <div class="fila-botones fila-tres">
+            <button class="boton" data-alinear="izquierda" title="Alinear a la izquierda">Izquierda</button>
+            <button class="boton" data-alinear="centro" title="Centrar en horizontal">Centro</button>
+            <button class="boton" data-alinear="derecha" title="Alinear a la derecha">Derecha</button>
+            <button class="boton" data-alinear="arriba" title="Alinear arriba">Arriba</button>
+            <button class="boton" data-alinear="medio" title="Centrar en vertical">Medio</button>
+            <button class="boton" data-alinear="abajo" title="Alinear abajo">Abajo</button>
+          </div>
+          <span>Repartir a la misma distancia</span>
+          <div class="fila-botones">
+            <button class="boton" data-distribuir="x" title="Necesita 3 elementos o más">En horizontal</button>
+            <button class="boton" data-distribuir="y" title="Necesita 3 elementos o más">En vertical</button>
+          </div>
+          <p class="ayuda">Mayúsculas + clic suma o quita elementos. Ctrl + C y Ctrl + V copian y pegan; las flechas los mueven.</p>
+        </div>
 
         <div class="fila-botones">
           <button id="boton-achicar" class="boton">− Disminuir</button>
@@ -155,7 +267,45 @@
   <!-- ===== Ventana: exportar ===== -->
   <dialog id="dialogo-exportar" class="dialogo">
     <h2>Exportar</h2>
-    <button id="boton-exportar-png" class="boton boton-principal boton-ancho">Imagen PNG (infografía)</button>
+    <div class="fila-campos">
+      <label class="campo">
+        Formato
+        <select id="campo-formato-hoja" class="campo-texto">
+          <option value="carta">Hoja carta horizontal</option>
+          <option value="a3">Hoja A3 horizontal</option>
+          <option value="mapa">Solo el mapa</option>
+        </select>
+      </label>
+      <label class="campo">
+        Calidad
+        <select id="campo-calidad-hoja" class="campo-texto">
+          <option value="150">Normal (150 ppp)</option>
+          <option value="300">Alta (300 ppp)</option>
+        </select>
+      </label>
+    </div>
+    <div id="grupo-datos-hoja">
+      <p class="ayuda">La hoja lleva el mapa, el norte, la escala, la leyenda y un rótulo con estos datos:</p>
+      <label class="campo">
+        Título
+        <input type="text" id="campo-titulo-hoja" class="campo-texto">
+      </label>
+      <div class="fila-campos">
+        <label class="campo">
+          Autor
+          <input type="text" id="campo-autor-hoja" class="campo-texto" placeholder="Tu nombre">
+        </label>
+        <label class="campo">
+          Fecha
+          <input type="date" id="campo-fecha-hoja" class="campo-texto">
+        </label>
+      </div>
+      <label class="campo campo-casilla">
+        <input type="checkbox" id="campo-leyenda-hoja">
+        Leyenda automática con los elementos usados
+      </label>
+    </div>
+    <button id="boton-exportar-png" class="boton boton-principal boton-ancho">Descargar imagen PNG</button>
     <button id="boton-imprimir" class="boton boton-ancho">Imprimir o guardar como PDF</button>
     <button id="boton-descargar-archivo" class="boton boton-ancho">Descargar archivo del mapa (.json)</button>
     <button id="boton-abrir-archivo" class="boton boton-ancho">Abrir archivo del mapa (.json)</button>
@@ -164,6 +314,10 @@
   </dialog>
 
   <div id="aviso" class="aviso"></div>
+
+  <!-- La hoja de infografía se pone aquí solo mientras se imprime -->
+  <img id="hoja-para-imprimir" class="hoja-para-imprimir" alt="">
+  <style id="estilo-pagina"></style>
 
   <!-- Si app.js no carga, este aviso se queda visible. app.js lo quita al arrancar. -->
   <div id="aviso-falta-app" style="position:fixed;inset:auto 16px 16px 16px;z-index:300;padding:14px 18px;border-radius:10px;background:#fef3c7;color:#78350f;font:15px system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.2)">

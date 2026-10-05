@@ -38,8 +38,25 @@ const CATEGORIAS = [
   { id: 'comercio', nombre: 'Viviendas y comunidad' },
   { id: 'infraestructura', nombre: 'Infraestructura' },
   { id: 'caminos', nombre: 'Caminos y redes' },
+  { id: 'topografia', nombre: 'Topografía' },
+  { id: 'mobiliario', nombre: 'Mobiliario urbano' },
   { id: 'zonas', nombre: 'Zonas y secciones' },
   { id: 'anotacion', nombre: 'Textos y flechas' }
+];
+
+// Capas del plano: agrupan los elementos para mostrarlos, ocultarlos o bloquearlos juntos.
+// Cada elemento del catálogo dice a qué capa pertenece con "capa".
+const CAPAS = [
+  { id: 'vegetacion', nombre: 'Vegetación' },
+  { id: 'edificaciones', nombre: 'Edificaciones' },
+  { id: 'equipamientos', nombre: 'Equipamientos y servicios' },
+  { id: 'electrica', nombre: 'Red eléctrica' },
+  { id: 'agua', nombre: 'Agua y alcantarillado' },
+  { id: 'vias', nombre: 'Vías y caminos' },
+  { id: 'topografia', nombre: 'Topografía' },
+  { id: 'mobiliario', nombre: 'Mobiliario urbano' },
+  { id: 'zonas', nombre: 'Zonas y secciones' },
+  { id: 'anotaciones', nombre: 'Textos, cotas y flechas' }
 ];
 
 // Cada elemento tiene una "forma" que dice cómo se dibuja:
@@ -48,73 +65,96 @@ const CATEGORIAS = [
 //   'linea'   → una franja larga: calles, cables, tuberías, quebradas…
 //   'texto'   → un texto que escribes tú
 //   'flecha'  → una flecha que puedes girar
+// Las líneas pueden tener un "estiloLinea": 'sendero' (a trazos), 'escalera' (con peldaños)
+// o 'muro' (muro de contención). Las zonas pueden traer una "trama": 'diagonal', 'cruzada' o 'puntos'.
 const CATALOGO_ELEMENTOS = [
   // --- Naturaleza ---
-  { id: 'arbol', nombre: 'Árbol', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbol', color: '#8fbf7f', tamano: 56 },
-  { id: 'arbol-frondoso', nombre: 'Árbol frondoso', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbolFrondoso', color: '#6fa86a', tamano: 70 },
-  { id: 'pino', nombre: 'Pino', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'pino', color: '#5b8f6a', tamano: 52 },
-  { id: 'palmera', nombre: 'Palmera', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'palmera', color: '#9cc27c', tamano: 56 },
-  { id: 'arbusto', nombre: 'Arbusto', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbusto', color: '#a6c98c', tamano: 40 },
-  { id: 'jardinera', nombre: 'Jardinera con flores', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'jardinera', color: '#e07a8a', tamano: 46 },
-  { id: 'roca', nombre: 'Roca', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'roca', color: '#b3aca1', tamano: 40 },
-  { id: 'cesped', nombre: 'Césped / pasto', categoria: 'naturaleza', forma: 'zona', figura: 'rectangulo', color: '#9ccc65', ancho: 160, alto: 100 },
-  { id: 'lago', nombre: 'Lago o laguna', categoria: 'naturaleza', forma: 'zona', figura: 'elipse', color: '#7fb8d9', ancho: 140, alto: 90 },
+  { id: 'arbol', capa: 'vegetacion', nombre: 'Árbol', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbol', color: '#8fbf7f', tamano: 56 },
+  { id: 'arbol-frondoso', capa: 'vegetacion', nombre: 'Árbol frondoso', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbolFrondoso', color: '#6fa86a', tamano: 70 },
+  { id: 'pino', capa: 'vegetacion', nombre: 'Pino', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'pino', color: '#5b8f6a', tamano: 52 },
+  { id: 'palmera', capa: 'vegetacion', nombre: 'Palmera', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'palmera', color: '#9cc27c', tamano: 56 },
+  { id: 'arbusto', capa: 'vegetacion', nombre: 'Arbusto', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbusto', color: '#a6c98c', tamano: 40 },
+  { id: 'jardinera', capa: 'vegetacion', nombre: 'Jardinera con flores', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'jardinera', color: '#e07a8a', tamano: 46 },
+  { id: 'roca', capa: 'vegetacion', nombre: 'Roca', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'roca', color: '#b3aca1', tamano: 40 },
+  { id: 'cesped', capa: 'vegetacion', nombre: 'Césped / pasto', categoria: 'naturaleza', forma: 'zona', figura: 'rectangulo', color: '#9ccc65', ancho: 160, alto: 100 },
+  { id: 'lago', capa: 'agua', nombre: 'Lago o laguna', categoria: 'naturaleza', forma: 'zona', figura: 'elipse', color: '#7fb8d9', ancho: 140, alto: 90 },
 
   // --- Viviendas y comunidad ---
-  { id: 'casa', nombre: 'Casa (cuatro aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casa', color: '#d9a37a', tamano: 48 },
-  { id: 'casa-dos-aguas', nombre: 'Casa (dos aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaDosAguas', color: '#c98f6b', tamano: 48 },
-  { id: 'casa-patio', nombre: 'Casa con patio', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaPatio', color: '#dcb08a', tamano: 56 },
-  { id: 'manzana', nombre: 'Grupo de casas', categoria: 'comercio', forma: 'simbolo', simbolo: 'manzana', color: '#d39b74', tamano: 70 },
-  { id: 'edificio', nombre: 'Edificio', categoria: 'comercio', forma: 'simbolo', simbolo: 'edificio', color: '#b9c0c7', tamano: 64 },
-  { id: 'construccion', nombre: 'Vivienda en construcción', categoria: 'comercio', forma: 'simbolo', simbolo: 'construccion', color: '#8a8f94', tamano: 48 },
-  { id: 'tienda', nombre: 'Tienda', categoria: 'comercio', forma: 'simbolo', simbolo: 'tienda', color: '#e08e45', tamano: 40 },
-  { id: 'centro-comercial', nombre: 'Centro comercial', categoria: 'comercio', forma: 'simbolo', simbolo: 'centroComercial', color: '#b5651d', tamano: 44 },
-  { id: 'iglesia', nombre: 'Iglesia', categoria: 'comercio', forma: 'simbolo', simbolo: 'iglesia', color: '#7d6b9d', tamano: 40 },
-  { id: 'escuela', nombre: 'Escuela', categoria: 'comercio', forma: 'simbolo', simbolo: 'escuela', color: '#3d7ea6', tamano: 40 },
-  { id: 'hospital', nombre: 'Hospital / puesto de salud', categoria: 'comercio', forma: 'simbolo', simbolo: 'hospital', color: '#c94c4c', tamano: 40 },
-  { id: 'cancha', nombre: 'Cancha', categoria: 'comercio', forma: 'simbolo', simbolo: 'cancha', color: '#6fae6a', tamano: 80 },
-  { id: 'parque-infantil', nombre: 'Parque infantil', categoria: 'comercio', forma: 'simbolo', simbolo: 'parqueInfantil', color: '#e3a33b', tamano: 40 },
-  { id: 'teleferico', nombre: 'Estación de cable', categoria: 'comercio', forma: 'simbolo', simbolo: 'teleferico', color: '#2f6f8f', tamano: 40 },
-  { id: 'parada-bus', nombre: 'Parada de bus', categoria: 'comercio', forma: 'simbolo', simbolo: 'paradaBus', color: '#2e8b57', tamano: 36 },
+  { id: 'casa', capa: 'edificaciones', nombre: 'Casa (cuatro aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casa', color: '#d9a37a', tamano: 48 },
+  { id: 'casa-dos-aguas', capa: 'edificaciones', nombre: 'Casa (dos aguas)', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaDosAguas', color: '#c98f6b', tamano: 48 },
+  { id: 'casa-patio', capa: 'edificaciones', nombre: 'Casa con patio', categoria: 'comercio', forma: 'simbolo', simbolo: 'casaPatio', color: '#dcb08a', tamano: 56 },
+  { id: 'manzana', capa: 'edificaciones', nombre: 'Grupo de casas', categoria: 'comercio', forma: 'simbolo', simbolo: 'manzana', color: '#d39b74', tamano: 70 },
+  { id: 'edificio', capa: 'edificaciones', nombre: 'Edificio', categoria: 'comercio', forma: 'simbolo', simbolo: 'edificio', color: '#b9c0c7', tamano: 64 },
+  { id: 'construccion', capa: 'edificaciones', nombre: 'Vivienda en construcción', categoria: 'comercio', forma: 'simbolo', simbolo: 'construccion', color: '#8a8f94', tamano: 48 },
+  { id: 'tienda', capa: 'equipamientos', nombre: 'Tienda', categoria: 'comercio', forma: 'simbolo', simbolo: 'tienda', color: '#e08e45', tamano: 40 },
+  { id: 'centro-comercial', capa: 'equipamientos', nombre: 'Centro comercial', categoria: 'comercio', forma: 'simbolo', simbolo: 'centroComercial', color: '#b5651d', tamano: 44 },
+  { id: 'iglesia', capa: 'equipamientos', nombre: 'Iglesia', categoria: 'comercio', forma: 'simbolo', simbolo: 'iglesia', color: '#7d6b9d', tamano: 40 },
+  { id: 'escuela', capa: 'equipamientos', nombre: 'Escuela', categoria: 'comercio', forma: 'simbolo', simbolo: 'escuela', color: '#3d7ea6', tamano: 40 },
+  { id: 'hospital', capa: 'equipamientos', nombre: 'Hospital / puesto de salud', categoria: 'comercio', forma: 'simbolo', simbolo: 'hospital', color: '#c94c4c', tamano: 40 },
+  { id: 'cancha', capa: 'equipamientos', nombre: 'Cancha', categoria: 'comercio', forma: 'simbolo', simbolo: 'cancha', color: '#6fae6a', tamano: 80 },
+  { id: 'parque-infantil', capa: 'equipamientos', nombre: 'Parque infantil', categoria: 'comercio', forma: 'simbolo', simbolo: 'parqueInfantil', color: '#e3a33b', tamano: 40 },
+  { id: 'teleferico', capa: 'equipamientos', nombre: 'Estación de cable', categoria: 'comercio', forma: 'simbolo', simbolo: 'teleferico', color: '#2f6f8f', tamano: 40 },
+  { id: 'parada-bus', capa: 'equipamientos', nombre: 'Parada de bus', categoria: 'comercio', forma: 'simbolo', simbolo: 'paradaBus', color: '#2e8b57', tamano: 36 },
+  { id: 'cai', capa: 'equipamientos', nombre: 'CAI (Policía)', categoria: 'comercio', forma: 'simbolo', simbolo: 'cai', color: '#1f4e79', tamano: 40 },
+  { id: 'biblioteca', capa: 'equipamientos', nombre: 'Biblioteca', categoria: 'comercio', forma: 'simbolo', simbolo: 'biblioteca', color: '#8e5b3e', tamano: 40 },
+  { id: 'salon-comunal', capa: 'equipamientos', nombre: 'Salón comunal', categoria: 'comercio', forma: 'simbolo', simbolo: 'salonComunal', color: '#c26a3d', tamano: 40 },
 
   // --- Infraestructura ---
-  { id: 'poste', nombre: 'Poste eléctrico', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'poste', color: '#e0a800', tamano: 22 },
-  { id: 'transformador', nombre: 'Transformador', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'transformador', color: '#f2c94c', tamano: 30 },
-  { id: 'planta-electrica', nombre: 'Planta eléctrica', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaElectrica', color: '#e8a33d', tamano: 56 },
-  { id: 'planta-agua', nombre: 'Planta de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaAgua', color: '#3b82c4', tamano: 56 },
-  { id: 'tanque-agua', nombre: 'Tanque de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'tanqueAgua', color: '#9cc3e6', tamano: 44 },
-  { id: 'alumbrado', nombre: 'Alumbrado público', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'alumbrado', color: '#f6c344', tamano: 30 },
-  { id: 'semaforo', nombre: 'Semáforo', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'semaforo', color: '#3a4245', tamano: 32 },
-  { id: 'antena', nombre: 'Antena', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'antena', color: '#6b7a86', tamano: 40 },
-  { id: 'reciclaje', nombre: 'Punto de reciclaje', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'reciclaje', color: '#4f9d69', tamano: 40 },
+  { id: 'poste', capa: 'electrica', nombre: 'Poste eléctrico', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'poste', color: '#e0a800', tamano: 22 },
+  { id: 'transformador', capa: 'electrica', nombre: 'Transformador', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'transformador', color: '#f2c94c', tamano: 30 },
+  { id: 'planta-electrica', capa: 'electrica', nombre: 'Planta eléctrica', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaElectrica', color: '#e8a33d', tamano: 56 },
+  { id: 'planta-agua', capa: 'agua', nombre: 'Planta de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'plantaAgua', color: '#3b82c4', tamano: 56 },
+  { id: 'tanque-agua', capa: 'agua', nombre: 'Tanque de agua', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'tanqueAgua', color: '#9cc3e6', tamano: 44 },
+  { id: 'alumbrado', capa: 'electrica', nombre: 'Alumbrado público', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'alumbrado', color: '#f6c344', tamano: 30 },
+  { id: 'semaforo', capa: 'vias', nombre: 'Semáforo', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'semaforo', color: '#3a4245', tamano: 32 },
+  { id: 'antena', capa: 'equipamientos', nombre: 'Antena', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'antena', color: '#6b7a86', tamano: 40 },
+  { id: 'reciclaje', capa: 'equipamientos', nombre: 'Punto de reciclaje', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'reciclaje', color: '#4f9d69', tamano: 40 },
 
   // --- Caminos y redes (colorCentro es la raya del medio) ---
-  { id: 'calle', nombre: 'Calle', categoria: 'caminos', forma: 'linea', color: '#a3a8ad', colorCentro: '#ffffff', ancho: 220, alto: 22 },
-  { id: 'avenida', nombre: 'Avenida', categoria: 'caminos', forma: 'linea', color: '#7b8187', colorCentro: '#f2c94c', ancho: 300, alto: 34 },
-  { id: 'camino', nombre: 'Camino peatonal', categoria: 'caminos', forma: 'linea', color: '#d8c3a0', colorCentro: null, ancho: 180, alto: 12 },
-  { id: 'red-electrica', nombre: 'Red eléctrica', categoria: 'caminos', forma: 'linea', color: '#e8a33d', colorCentro: '#2f3a37', ancho: 240, alto: 8 },
-  { id: 'tuberia-agua', nombre: 'Tubería de agua', categoria: 'caminos', forma: 'linea', color: '#3b82c4', colorCentro: '#bcd7ef', ancho: 240, alto: 10 },
-  { id: 'quebrada', nombre: 'Quebrada / río', categoria: 'caminos', forma: 'linea', color: '#7fb8d9', colorCentro: null, ancho: 260, alto: 16 },
-  { id: 'alcantarillado', nombre: 'Alcantarillado', categoria: 'caminos', forma: 'linea', color: '#7a5233', colorCentro: '#d6b48c', ancho: 240, alto: 10 },
+  { id: 'calle', capa: 'vias', nombre: 'Calle', categoria: 'caminos', forma: 'linea', color: '#a3a8ad', colorCentro: '#ffffff', ancho: 220, alto: 22 },
+  { id: 'avenida', capa: 'vias', nombre: 'Avenida', categoria: 'caminos', forma: 'linea', color: '#7b8187', colorCentro: '#f2c94c', ancho: 300, alto: 34 },
+  { id: 'camino', capa: 'vias', nombre: 'Camino peatonal', categoria: 'caminos', forma: 'linea', color: '#d8c3a0', colorCentro: null, ancho: 180, alto: 12 },
+  { id: 'red-electrica', capa: 'electrica', nombre: 'Red eléctrica', categoria: 'caminos', forma: 'linea', color: '#e8a33d', colorCentro: '#2f3a37', ancho: 240, alto: 8 },
+  { id: 'tuberia-agua', capa: 'agua', nombre: 'Tubería de agua', categoria: 'caminos', forma: 'linea', color: '#3b82c4', colorCentro: '#bcd7ef', ancho: 240, alto: 10 },
+  { id: 'quebrada', capa: 'agua', nombre: 'Quebrada / río', categoria: 'caminos', forma: 'linea', color: '#7fb8d9', colorCentro: null, ancho: 260, alto: 16 },
+  { id: 'alcantarillado', capa: 'agua', nombre: 'Alcantarillado', categoria: 'caminos', forma: 'linea', color: '#7a5233', colorCentro: '#d6b48c', ancho: 240, alto: 10 },
+  { id: 'sendero', capa: 'vias', nombre: 'Sendero / trocha', categoria: 'caminos', forma: 'linea', estiloLinea: 'sendero', color: '#a0784f', colorCentro: null, ancho: 180, alto: 5 },
+  { id: 'escalera', capa: 'vias', nombre: 'Escaleras', categoria: 'caminos', forma: 'linea', estiloLinea: 'escalera', color: '#e2d6c2', colorCentro: null, ancho: 120, alto: 18 },
+
+  // --- Topografía ---
+  { id: 'curva-nivel', capa: 'topografia', nombre: 'Curva de nivel', categoria: 'topografia', forma: 'linea', color: '#b07a4f', colorCentro: null, ancho: 260, alto: 2 },
+  { id: 'curva-indice', capa: 'topografia', nombre: 'Curva de nivel índice', categoria: 'topografia', forma: 'linea', color: '#8a5530', colorCentro: null, ancho: 260, alto: 4 },
+  { id: 'muro-contencion', capa: 'topografia', nombre: 'Muro de contención', categoria: 'topografia', forma: 'linea', estiloLinea: 'muro', color: '#5f6366', colorCentro: null, ancho: 160, alto: 14 },
+  { id: 'pendiente', capa: 'topografia', nombre: 'Pendiente (bajada)', categoria: 'topografia', forma: 'simbolo', simbolo: 'pendiente', color: '#8a5530', tamano: 50 },
+  { id: 'talud', capa: 'topografia', nombre: 'Talud', categoria: 'topografia', forma: 'zona', figura: 'rectangulo', color: '#b07a4f', trama: 'diagonal', ancho: 160, alto: 60 },
+
+  // --- Mobiliario urbano ---
+  { id: 'banca', capa: 'mobiliario', nombre: 'Banca', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'banca', color: '#b98a5a', tamano: 30 },
+  { id: 'caneca', capa: 'mobiliario', nombre: 'Caneca de basura', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'caneca', color: '#4f9d69', tamano: 20 },
+  { id: 'paradero-mio', capa: 'mobiliario', nombre: 'Paradero MIO', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'paraderoMio', color: '#0f6db3', tamano: 36 },
 
   // --- Zonas y secciones de color ---
-  { id: 'zona-residencial', nombre: 'Zona residencial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#e3a76f', ancho: 200, alto: 140 },
-  { id: 'zona-comercial', nombre: 'Zona comercial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#9b8ec4', ancho: 200, alto: 140 },
-  { id: 'zona-verde', nombre: 'Zona verde', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#7fb069', ancho: 180, alto: 130 },
-  { id: 'zona-riesgo', nombre: 'Zona de riesgo', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#d9534f', ancho: 180, alto: 130 },
-  { id: 'seccion-rectangular', nombre: 'Sección rectangular', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#6c9bd2', ancho: 200, alto: 140 },
-  { id: 'seccion-circular', nombre: 'Sección circular', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#5bb5a2', ancho: 160, alto: 160 },
+  { id: 'zona-residencial', capa: 'zonas', nombre: 'Zona residencial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#e3a76f', ancho: 200, alto: 140 },
+  { id: 'zona-comercial', capa: 'zonas', nombre: 'Zona comercial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#9b8ec4', ancho: 200, alto: 140 },
+  { id: 'zona-verde', capa: 'zonas', nombre: 'Zona verde', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#7fb069', ancho: 180, alto: 130 },
+  { id: 'zona-riesgo', capa: 'zonas', nombre: 'Zona de riesgo', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#d9534f', ancho: 180, alto: 130 },
+  { id: 'amenaza-deslizamiento', capa: 'zonas', nombre: 'Deslizamiento (amenaza)', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#b5562a', trama: 'diagonal', ancho: 180, alto: 130 },
+  { id: 'amenaza-inundacion', capa: 'zonas', nombre: 'Inundación (amenaza)', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#2f7fc1', trama: 'puntos', ancho: 180, alto: 130 },
+  { id: 'seccion-rectangular', capa: 'zonas', nombre: 'Sección rectangular', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#6c9bd2', ancho: 200, alto: 140 },
+  { id: 'seccion-circular', capa: 'zonas', nombre: 'Sección circular', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#5bb5a2', ancho: 160, alto: 160 },
 
   // --- Textos y flechas ---
-  { id: 'titulo', nombre: 'Título', categoria: 'anotacion', forma: 'texto', estiloTexto: 'titulo', color: '#1f2a2e', tamano: 40, textoInicial: 'Barrio Siloé' },
-  { id: 'subtitulo', nombre: 'Subtítulo', categoria: 'anotacion', forma: 'texto', estiloTexto: 'subtitulo', color: '#3a4a50', tamano: 24, textoInicial: 'Comuna 20 · Cali' },
-  { id: 'etiqueta', nombre: 'Etiqueta', categoria: 'anotacion', forma: 'texto', estiloTexto: 'etiqueta', color: '#1f2a2e', tamano: 16, textoInicial: 'Nombre del lugar' },
-  { id: 'nota', nombre: 'Nota', categoria: 'anotacion', forma: 'texto', estiloTexto: 'nota', color: '#1f2a2e', tamano: 16, textoInicial: 'Escribe una nota' },
-  { id: 'flecha', nombre: 'Flecha', categoria: 'anotacion', forma: 'flecha', figura: 'simple', color: '#c0392b', ancho: 120, alto: 60 },
-  { id: 'flecha-doble', nombre: 'Flecha doble', categoria: 'anotacion', forma: 'flecha', figura: 'doble', color: '#2f6f8f', ancho: 140, alto: 60 },
-  { id: 'punto-interes', nombre: 'Punto de interés', categoria: 'anotacion', forma: 'simbolo', simbolo: 'puntoInteres', color: '#d9534f', tamano: 40 },
-  { id: 'advertencia', nombre: 'Advertencia', categoria: 'anotacion', forma: 'simbolo', simbolo: 'advertencia', color: '#f2b134', tamano: 40 },
-  { id: 'norte', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 }
+  { id: 'titulo', capa: 'anotaciones', nombre: 'Título', categoria: 'anotacion', forma: 'texto', estiloTexto: 'titulo', color: '#1f2a2e', tamano: 40, textoInicial: 'Barrio Siloé' },
+  { id: 'subtitulo', capa: 'anotaciones', nombre: 'Subtítulo', categoria: 'anotacion', forma: 'texto', estiloTexto: 'subtitulo', color: '#3a4a50', tamano: 24, textoInicial: 'Comuna 20 · Cali' },
+  { id: 'etiqueta', capa: 'anotaciones', nombre: 'Etiqueta', categoria: 'anotacion', forma: 'texto', estiloTexto: 'etiqueta', color: '#1f2a2e', tamano: 16, textoInicial: 'Nombre del lugar' },
+  { id: 'nota', capa: 'anotaciones', nombre: 'Nota', categoria: 'anotacion', forma: 'texto', estiloTexto: 'nota', color: '#1f2a2e', tamano: 16, textoInicial: 'Escribe una nota' },
+  { id: 'flecha', capa: 'anotaciones', nombre: 'Flecha', categoria: 'anotacion', forma: 'flecha', figura: 'simple', color: '#c0392b', ancho: 120, alto: 60 },
+  { id: 'flecha-doble', capa: 'anotaciones', nombre: 'Flecha doble', categoria: 'anotacion', forma: 'flecha', figura: 'doble', color: '#2f6f8f', ancho: 140, alto: 60 },
+  { id: 'punto-interes', capa: 'anotaciones', nombre: 'Punto de interés', categoria: 'anotacion', forma: 'simbolo', simbolo: 'puntoInteres', color: '#d9534f', tamano: 40 },
+  { id: 'advertencia', capa: 'anotaciones', nombre: 'Advertencia', categoria: 'anotacion', forma: 'simbolo', simbolo: 'advertencia', color: '#f2b134', tamano: 40 },
+  { id: 'norte', capa: 'anotaciones', nombre: 'Flecha del norte', categoria: 'anotacion', forma: 'simbolo', simbolo: 'norte', color: '#2f3a37', tamano: 60 },
+  { id: 'escala-grafica', capa: 'anotaciones', nombre: 'Escala gráfica', categoria: 'anotacion', forma: 'escala', color: '#2f3a37', tamano: 34 },
+  { id: 'cota', capa: 'anotaciones', nombre: 'Cota (medida)', categoria: 'anotacion', forma: 'cota', color: '#2f3a37', ancho: 150, alto: 26 }
 ];
 
 // Cómo se ve cada tipo de texto
@@ -144,9 +184,35 @@ let elementosEnMapa = [];        // los elementos colocados, en orden de dibujo
 let fondoDelMapa = { color: '#ffffff', visibilidad: 100, tenido: false };
 let nombreDelMapa = 'Mi mapa de Siloé';
 let siguienteId = 1;
-let idSeleccionado = null;
+let idSeleccionado = null;       // el elemento principal de la selección (el último que tocaste)
+let idsSeleccionados = [];       // todos los elementos elegidos (con Mayúsculas o "Varios")
+let modoVarios = false;          // en el móvil: tocar elementos los va sumando a la selección
+let portapapeles = [];           // copias de los elementos para pegar con Ctrl + V
+let vecesPegado = 0;
+let historial = [];              // fotos del mapa para deshacer y rehacer
+let posicionEnHistorial = -1;
 let nivelZoom = 1;
 let categoriaActiva = 'todos';
+
+// Escala y ayudas de dibujo del plano.
+// metrosPorPixel es un valor estimado: calíbralo con una cota sobre una distancia conocida.
+let planoConfig = { metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false };
+let estadoCapas = crearEstadoCapasInicial();  // qué capas se ven y cuáles están bloqueadas
+let herramienta = 'seleccionar';   // 'seleccionar', 'medir' o 'dibujar'
+let dibujoEnCurso = null;          // los puntos de un trazo o zona que se está dibujando
+let medicionEnCurso = null;        // la cota que se está dibujando con la herramienta Medir
+
+// Datos de la hoja de infografía (ventana Exportar)
+let hojaConfig = { formato: 'carta', calidad: 150, titulo: '', autor: '', fecha: '', leyenda: true };
+
+// Todas las capas empiezan visibles y sin bloquear
+function crearEstadoCapasInicial() {
+  const estado = {};
+  CAPAS.forEach(function (capa) {
+    estado[capa.id] = { visible: true, bloqueada: false };
+  });
+  return estado;
+}
 
 // Datos temporales mientras se arrastra algo
 let arrastreDesdePanel = null;   // un elemento que viene del panel
@@ -396,6 +462,47 @@ const SIMBOLOS = {
     return '<path d="M50 94 C50 94 18 58 18 38 A32 32 0 0 1 82 38 C82 58 50 94 50 94 Z" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<circle cx="50" cy="38" r="12" fill="#ffffff"/>';
   },
+  cai: function (color) {
+    return insignia(color, '<path d="M50 22 L72 30 L72 50 C72 64 62 74 50 80 C38 74 28 64 28 50 L28 30 Z" fill="#ffffff"/>' +
+      '<polygon points="50,38 54,47 63,47 56,53 59,62 50,56 41,62 44,53 37,47 46,47" fill="' + color + '"/>');
+  },
+  biblioteca: function (color) {
+    return insignia(color, '<rect x="26" y="28" width="11" height="44" rx="1.5" fill="#ffffff"/>' +
+      '<rect x="40" y="24" width="11" height="48" rx="1.5" fill="#ffffff"/>' +
+      '<rect x="55" y="29" width="11" height="44" rx="1.5" fill="#ffffff" transform="rotate(14 60 51)"/>' +
+      '<path d="M24 76 L76 76" ' + BLANCO + '/>');
+  },
+  salonComunal: function (color) {
+    return insignia(color, '<circle cx="50" cy="34" r="8" fill="#ffffff"/><circle cx="31" cy="42" r="6.5" fill="#ffffff"/><circle cx="69" cy="42" r="6.5" fill="#ffffff"/>' +
+      '<path d="M36 72 C36 54 64 54 64 72 Z" fill="#ffffff"/>' +
+      '<path d="M20 72 C20 58 38 56 40 62 M80 72 C80 58 62 56 60 62" ' + BLANCO + '/>');
+  },
+  pendiente: function (color) {
+    // Flecha que apunta hacia donde baja el terreno, con el rayado de un talud a los lados
+    let rayas = '';
+    for (let i = 0; i < 5; i++) {
+      const y = 20 + i * 15;
+      rayas += '<line x1="12" y1="' + y + '" x2="' + (i % 2 === 0 ? 26 : 20) + '" y2="' + y + '"/>' +
+        '<line x1="88" y1="' + y + '" x2="' + (i % 2 === 0 ? 74 : 80) + '" y2="' + y + '"/>';
+    }
+    return '<g stroke="' + color + '" stroke-width="2.5" stroke-linecap="round">' + rayas + '<line x1="12" y1="12" x2="12" y2="88"/><line x1="88" y1="12" x2="88" y2="88"/></g>' +
+      '<path d="M50 12 L50 70" stroke="' + color + '" stroke-width="7" stroke-linecap="round"/>' +
+      '<polygon points="34,64 66,64 50,92" fill="' + color + '"/>';
+  },
+  banca: function (color) {
+    return '<rect x="8" y="30" width="84" height="40" rx="3" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5"/>' +
+      '<path d="M8 43 L92 43 M8 57 L92 57" stroke="' + TRAZO + '" stroke-width="1.5" stroke-opacity="0.6"/>' +
+      '<rect x="14" y="24" width="8" height="52" rx="2" fill="' + TRAZO + '"/><rect x="78" y="24" width="8" height="52" rx="2" fill="' + TRAZO + '"/>';
+  },
+  caneca: function (color) {
+    return '<circle cx="50" cy="50" r="42" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="5"/>' +
+      '<circle cx="50" cy="50" r="24" fill="#ffffff" fill-opacity="0.55" stroke="' + TRAZO + '" stroke-width="3"/>';
+  },
+  paraderoMio: function (color) {
+    return '<rect x="6" y="18" width="88" height="64" rx="14" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5"/>' +
+      '<rect x="12" y="24" width="76" height="52" rx="10" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.8"/>' +
+      '<text x="50" y="61" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#ffffff">MIO</text>';
+  },
   advertencia: function (color) {
     return '<polygon points="50,10 93,86 7,86" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="3" stroke-linejoin="round"/>' +
       '<rect x="45.5" y="36" width="9" height="28" rx="3" fill="' + TRAZO + '"/><circle cx="50" cy="74" r="5" fill="' + TRAZO + '"/>';
@@ -408,10 +515,6 @@ const SIMBOLOS = {
   }
 };
 
-// El SVG completo de un símbolo, listo para ponerlo en la página o convertirlo en imagen
-function crearSvgDeSimbolo(tipo, color) {
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + SIMBOLOS[tipo.simbolo](color) + '</svg>';
-}
 
 
 /* =============================================================
@@ -450,6 +553,30 @@ const listaMapas = document.getElementById('lista-mapas');
 const campoAbrirArchivo = document.getElementById('campo-abrir-archivo');
 const aviso = document.getElementById('aviso');
 
+const capaCuadricula = document.getElementById('capa-cuadricula');
+const campoMetrosPixel = document.getElementById('campo-metros-pixel');
+const campoMostrarCuadricula = document.getElementById('campo-mostrar-cuadricula');
+const campoTamanoCuadricula = document.getElementById('campo-tamano-cuadricula');
+const campoIman = document.getElementById('campo-iman');
+const campoMostrarArea = document.getElementById('campo-mostrar-area');
+const campoMedidaReal = document.getElementById('campo-medida-real');
+const listaCapas = document.getElementById('lista-capas');
+const guiaDibujo = document.getElementById('guia-dibujo');
+const barraDibujo = document.getElementById('barra-dibujo');
+const campoTipoTrazo = document.getElementById('campo-tipo-trazo');
+const campoSuavizarDibujo = document.getElementById('campo-suavizar-dibujo');
+const campoSuavizar = document.getElementById('campo-suavizar');
+const campoGrosor = document.getElementById('campo-grosor');
+const campoTrama = document.getElementById('campo-trama');
+const campoFormatoHoja = document.getElementById('campo-formato-hoja');
+const campoCalidadHoja = document.getElementById('campo-calidad-hoja');
+const campoTituloHoja = document.getElementById('campo-titulo-hoja');
+const campoAutorHoja = document.getElementById('campo-autor-hoja');
+const campoFechaHoja = document.getElementById('campo-fecha-hoja');
+const campoLeyendaHoja = document.getElementById('campo-leyenda-hoja');
+const hojaParaImprimir = document.getElementById('hoja-para-imprimir');
+const estiloPagina = document.getElementById('estilo-pagina');
+
 
 /* =============================================================
    4. DIBUJAR ELEMENTOS
@@ -461,6 +588,16 @@ function buscarTipo(tipoId) {
 
 function buscarElemento(id) {
   return elementosEnMapa.find(function (elemento) { return elemento.id === id; });
+}
+
+function capaDelElemento(elemento) {
+  return estadoCapas[buscarTipo(elemento.tipoId).capa];
+}
+
+// Un elemento se puede tocar si su capa se ve y no está bloqueada
+function sePuedeEditar(elemento) {
+  const capa = capaDelElemento(elemento);
+  return capa.visible && !capa.bloqueada;
 }
 
 function buscarNodo(id) {
@@ -477,9 +614,38 @@ function normalizarAngulo(angulo) {
   return ((angulo + 180) % 360 + 360) % 360 - 180;
 }
 
-// Los símbolos y los textos tienen un solo tamaño; el resto, ancho y alto
-function usaTamanoUnico(tipo) {
-  return tipo.forma === 'simbolo' || tipo.forma === 'texto';
+// La forma con que se dibuja un elemento. Los dibujados a mano (con "puntos")
+// son un 'trazo' (vías, redes) o un 'poligono' (zonas), aunque su tipo sea de línea o zona.
+function formaDe(elemento) {
+  const tipo = buscarTipo(elemento.tipoId);
+  if (elemento.puntos) {
+    return tipo.forma === 'zona' ? 'poligono' : 'trazo';
+  }
+  return tipo.forma;
+}
+
+function esDibujoLibre(elemento) {
+  return Boolean(elemento.puntos);
+}
+
+// Los símbolos, los textos y la escala gráfica tienen un solo tamaño; el resto, ancho y alto
+function usaTamanoUnico(elemento) {
+  const forma = formaDe(elemento);
+  return forma === 'simbolo' || forma === 'texto' || forma === 'escala';
+}
+
+// Las líneas y las cotas solo cambian de largo con la manija; su grosor se cambia en el panel
+function soloCambiaElLargo(elemento) {
+  const forma = formaDe(elemento);
+  return forma === 'linea' || forma === 'cota';
+}
+
+// Con el imán activo, las posiciones saltan a la línea más cercana de la cuadrícula
+function ajustarAlIman(valor) {
+  if (!planoConfig.imanActivo) {
+    return valor;
+  }
+  return Math.round(valor / planoConfig.tamanoCuadricula) * planoConfig.tamanoCuadricula;
 }
 
 // Convierte '#22c55e' en 'rgba(34, 197, 94, 0.45)'
@@ -510,76 +676,375 @@ function crearDatosElemento(tipo, x, y) {
     rotacion: 0,
     opacidad: 100,
     color: tipo.color || '#000000',
-    texto: tipo.textoInicial || ''
+    texto: tipo.textoInicial || '',
+    mostrarArea: false,
+    trama: tipo.trama || 'ninguna'
   };
+}
+
+// Los textos se dibujan con HTML; todo lo demás, con un dibujo SVG
+function seDibujaConSvg(tipo) {
+  return tipo.forma !== 'texto';
+}
+
+// Medidas escritas a la manera colombiana: "12,5 m", "1.250 m²"
+function formatearMetros(metros) {
+  if (metros >= 1000) {
+    return (metros / 1000).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + ' km';
+  }
+  return metros.toLocaleString('es-CO', { maximumFractionDigits: metros < 10 ? 1 : 0 }) + ' m';
+}
+
+function formatearArea(metrosCuadrados) {
+  const texto = Math.round(metrosCuadrados).toLocaleString('es-CO') + ' m²';
+  if (metrosCuadrados >= 10000) {
+    return texto + ' (' + (metrosCuadrados / 10000).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + ' ha)';
+  }
+  return texto;
+}
+
+// Área real de una zona: se mide en píxeles y se convierte a metros cuadrados
+function calcularArea(elemento) {
+  const tipo = buscarTipo(elemento.tipoId);
+  const escalaAlCuadrado = planoConfig.metrosPorPixel * planoConfig.metrosPorPixel;
+  if (esDibujoLibre(elemento)) {
+    return areaDePoligono(elemento.puntos) * escalaAlCuadrado;
+  }
+  const areaEnPixeles = tipo.figura === 'elipse'
+    ? Math.PI * elemento.ancho * elemento.alto / 4
+    : elemento.ancho * elemento.alto;
+  return areaEnPixeles * planoConfig.metrosPorPixel * planoConfig.metrosPorPixel;
+}
+
+// Área de un polígono con la "fórmula del zapatero": se suman productos cruzados de puntos vecinos
+function areaDePoligono(puntos) {
+  let suma = 0;
+  puntos.forEach(function (punto, i) {
+    const siguiente = puntos[(i + 1) % puntos.length];
+    suma += punto[0] * siguiente[1] - siguiente[0] * punto[1];
+  });
+  return Math.abs(suma) / 2;
+}
+
+// Largo de un trazo: la suma de las distancias entre puntos seguidos
+function largoDeTrazo(puntos) {
+  let largo = 0;
+  for (let i = 1; i < puntos.length; i++) {
+    largo += Math.hypot(puntos[i][0] - puntos[i - 1][0], puntos[i][1] - puntos[i - 1][1]);
+  }
+  return largo;
+}
+
+// Caja que encierra todos los puntos
+function cajaDePuntos(puntos) {
+  const xs = puntos.map(function (p) { return p[0]; });
+  const ys = puntos.map(function (p) { return p[1]; });
+  return { minX: Math.min.apply(null, xs), maxX: Math.max.apply(null, xs), minY: Math.min.apply(null, ys), maxY: Math.max.apply(null, ys) };
+}
+
+// Convierte una lista de puntos en el texto "d" de un <path> de SVG.
+// Con "suavizar", usa curvas de Bézier que pasan por todos los puntos (método Catmull-Rom):
+// cada tramo se curva según la dirección que traen los puntos de antes y de después.
+function crearCaminoSvg(puntos, cerrado, suavizar) {
+  const texto = function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); };
+  if (!suavizar || puntos.length < 3) {
+    return 'M' + puntos.map(texto).join(' L') + (cerrado ? ' Z' : '');
+  }
+  let d = 'M' + texto(puntos[0]);
+  tramosCurvos(puntos, cerrado).forEach(function (tramo) {
+    d += ' C' + texto(tramo[0]) + ' ' + texto(tramo[1]) + ' ' + texto(tramo[2]);
+  });
+  return d + (cerrado ? ' Z' : '');
+}
+
+// Cada tramo curvo son tres puntos: dos de control y el punto de llegada
+function tramosCurvos(puntos, cerrado) {
+  const n = puntos.length;
+  const punto = function (i) {
+    if (cerrado) {
+      return puntos[(i + n) % n];
+    }
+    return puntos[limitar(i, 0, n - 1)];
+  };
+  const cantidad = cerrado ? n : n - 1;
+  const tramos = [];
+  for (let i = 0; i < cantidad; i++) {
+    const anterior = punto(i - 1);
+    const actual = punto(i);
+    const siguiente = punto(i + 1);
+    const despues = punto(i + 2);
+    const control1 = [actual[0] + (siguiente[0] - anterior[0]) / 6, actual[1] + (siguiente[1] - anterior[1]) / 6];
+    const control2 = [siguiente[0] - (despues[0] - actual[0]) / 6, siguiente[1] - (despues[1] - actual[1]) / 6];
+    tramos.push([control1, control2, siguiente]);
+  }
+  return tramos;
+}
+
+// Mitad del ancho y del alto que ocupa un camino alrededor del centro (0, 0).
+// Una curva nunca sale de sus puntos de control, por eso los contamos también.
+function mediaCajaDelCamino(puntos, cerrado, suavizar) {
+  let todos = puntos;
+  if (suavizar && puntos.length >= 3) {
+    todos = puntos.concat.apply(puntos, tramosCurvos(puntos, cerrado));
+  }
+  let mitadX = 0;
+  let mitadY = 0;
+  todos.forEach(function (p) {
+    mitadX = Math.max(mitadX, Math.abs(p[0]));
+    mitadY = Math.max(mitadY, Math.abs(p[1]));
+  });
+  return { mitadX: mitadX, mitadY: mitadY };
+}
+
+// Elige una longitud "redonda" (50 m, 100 m…) para que la escala gráfica mida cerca de 160 px
+function elegirLargoDeEscala() {
+  const opciones = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  let mejor = opciones[0];
+  opciones.forEach(function (metros) {
+    const diferencia = Math.abs(metros / planoConfig.metrosPorPixel - 160);
+    if (diferencia < Math.abs(mejor / planoConfig.metrosPorPixel - 160)) {
+      mejor = metros;
+    }
+  });
+  return mejor;
+}
+
+const FUENTE_SVG = 'system-ui, Segoe UI, Roboto, Arial, sans-serif';
+
+// Texto con borde blanco, para que se lea encima del mapa
+function textoConContorno(x, y, texto, tamano, color) {
+  return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-family="' + FUENTE_SVG + '" font-size="' + tamano +
+    '" font-weight="700" fill="' + color + '" stroke="#ffffff" stroke-width="' + (tamano * 0.3) +
+    '" stroke-linejoin="round" paint-order="stroke">' + texto + '</text>';
+}
+
+// Cada forma devuelve cuánto mide en pantalla y el dibujo SVG que va adentro.
+// Así el mismo dibujo sirve para la página, las miniaturas y la imagen PNG.
+// --- Tramas (rayados) para zonas: se hacen con un <pattern> de SVG ---
+// Cada trama necesita un id único en la página, por eso llevamos la cuenta.
+let contadorDeTramas = 0;
+
+const TRAMAS = {
+  ninguna: 'Sin trama',
+  diagonal: 'Rayado diagonal',
+  cruzada: 'Rayado cruzado',
+  puntos: 'Puntos'
+};
+
+// Devuelve { defs, relleno }: la definición del patrón y el "fill" que lo usa
+function crearTrama(trama, color) {
+  if (!trama || trama === 'ninguna') {
+    return null;
+  }
+  contadorDeTramas = contadorDeTramas + 1;
+  const id = 'trama-' + contadorDeTramas;
+  const linea = ' stroke="' + color + '" stroke-width="1.4" stroke-linecap="square"';
+  let dibujo = '';
+  if (trama === 'diagonal' || trama === 'cruzada') {
+    dibujo += '<path d="M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8"' + linea + '/>';
+  }
+  if (trama === 'cruzada') {
+    dibujo += '<path d="M-2 8 L2 12 M0 0 L10 10 M8 -2 L12 2"' + linea + '/>';
+  }
+  if (trama === 'puntos') {
+    dibujo += '<circle cx="2.5" cy="2.5" r="1.4" fill="' + color + '"/><circle cx="7.5" cy="7.5" r="1.4" fill="' + color + '"/>';
+  }
+  return {
+    defs: '<defs><pattern id="' + id + '" patternUnits="userSpaceOnUse" width="10" height="10">' + dibujo + '</pattern></defs>',
+    relleno: 'url(#' + id + ')'
+  };
+}
+
+// Pinta una figura de zona (sin atributos de color) con su relleno, su borde y su trama
+function pintarZona(figura, elemento) {
+  let contenido = figura + ' fill="' + colorTransparente(elemento.color, 0.45) + '" stroke="' + elemento.color + '" stroke-width="3" stroke-linejoin="round"/>';
+  const trama = crearTrama(elemento.trama, elemento.color);
+  if (trama) {
+    contenido = trama.defs + contenido + figura + ' fill="' + trama.relleno + '" stroke="none"/>';
+  }
+  return contenido;
+}
+
+// Pinta el trazo de una línea (recta o dibujada a mano) según su estilo.
+// "d" es el camino SVG por el centro de la línea.
+function pintarLinea(d, grosor, color, tipo) {
+  const camino = '<path d="' + d + '" fill="none" stroke-linejoin="round" ';
+  if (tipo.estiloLinea === 'sendero') {
+    return camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-dasharray="' + grosor * 2 + ' ' + grosor * 1.3 + '"/>';
+  }
+  if (tipo.estiloLinea === 'escalera') {
+    // La franja clara con rayas atravesadas (los peldaños)
+    return camino + 'stroke="' + TRAZO + '" stroke-width="' + (grosor + 2) + '"/>' +
+      camino + 'stroke="' + color + '" stroke-width="' + grosor + '"/>' +
+      camino + 'stroke="' + TRAZO + '" stroke-width="' + grosor + '" stroke-dasharray="1.5 ' + Math.max(4, grosor * 0.35) + '"/>';
+  }
+  if (tipo.estiloLinea === 'muro') {
+    // Una línea gruesa con rayitas cortas: así se dibuja un muro de contención
+    return camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-dasharray="2 5"/>' +
+      camino + 'stroke="' + color + '" stroke-width="' + Math.max(2, grosor * 0.4) + '"/>';
+  }
+  let contenido = camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-linecap="round"/>';
+  if (tipo.colorCentro) {
+    const raya = medidasRayaCentral(grosor);
+    contenido += camino + 'stroke="' + tipo.colorCentro + '" stroke-width="' + raya.grosor + '" stroke-dasharray="' + raya.tramo + ' ' + raya.tramo + '"/>';
+  }
+  return contenido;
+}
+
+const DIBUJOS = {
+  simbolo: function (elemento, tipo) {
+    return {
+      ancho: elemento.alto,
+      alto: elemento.alto,
+      contenido: '<g transform="scale(' + elemento.alto / 100 + ')">' + SIMBOLOS[tipo.simbolo](elemento.color) + '</g>'
+    };
+  },
+
+  zona: function (elemento, tipo) {
+    const ancho = elemento.ancho;
+    const alto = elemento.alto;
+    const figura = tipo.figura === 'elipse'
+      ? '<ellipse cx="' + ancho / 2 + '" cy="' + alto / 2 + '" rx="' + (ancho / 2 - 1.5) + '" ry="' + (alto / 2 - 1.5) + '"'
+      : '<rect x="1.5" y="1.5" width="' + (ancho - 3) + '" height="' + (alto - 3) + '" rx="9"';
+    let contenido = pintarZona(figura, elemento);
+    if (elemento.mostrarArea) {
+      contenido += textoConContorno(ancho / 2, alto / 2 + 4, formatearArea(calcularArea(elemento)), 12, TRAZO);
+    }
+    return { ancho: ancho, alto: alto, contenido: contenido };
+  },
+
+  linea: function (elemento, tipo) {
+    const ancho = elemento.ancho;
+    const alto = elemento.alto;
+    // Las líneas con punta redonda empiezan media línea adentro; las demás van de borde a borde
+    const adentro = tipo.estiloLinea ? 0 : alto / 2;
+    const d = 'M' + adentro + ' ' + alto / 2 + ' L' + (ancho - adentro) + ' ' + alto / 2;
+    return { ancho: ancho, alto: alto, contenido: pintarLinea(d, alto, elemento.color, tipo) };
+  },
+
+  flecha: function (elemento, tipo) {
+    // Pasamos los puntos de la caja de 100 x 50 al tamaño real de la flecha
+    const puntos = PUNTOS_FLECHA[tipo.figura].map(function (punto) {
+      return (punto[0] / 100 * elemento.ancho) + ',' + (punto[1] / 50 * elemento.alto);
+    }).join(' ');
+    return {
+      ancho: elemento.ancho,
+      alto: elemento.alto,
+      contenido: '<polygon points="' + puntos + '" fill="' + elemento.color + '"/>'
+    };
+  },
+
+  // Barra blanca y negra que muestra cuántos metros mide un tramo del mapa
+  escala: function (elemento) {
+    const metros = elegirLargoDeEscala();
+    const largo = metros / planoConfig.metrosPorPixel;
+    const margen = 30;
+    const alto = elemento.alto;
+    const altoBarra = alto * 0.28;
+    const tamanoLetra = alto * 0.36;
+    const arribaBarra = alto - altoBarra - 2;
+    let contenido = '';
+    for (let i = 0; i < 4; i++) {
+      contenido += '<rect x="' + (margen + i * largo / 4) + '" y="' + arribaBarra + '" width="' + largo / 4 + '" height="' + altoBarra +
+        '" fill="' + (i % 2 === 0 ? elemento.color : '#ffffff') + '" stroke="' + elemento.color + '" stroke-width="1.2"/>';
+    }
+    contenido += textoConContorno(margen, arribaBarra - 4, '0', tamanoLetra, elemento.color);
+    contenido += textoConContorno(margen + largo / 2, arribaBarra - 4, String(metros / 2), tamanoLetra, elemento.color);
+    contenido += textoConContorno(margen + largo, arribaBarra - 4, formatearMetros(metros), tamanoLetra, elemento.color);
+    return { ancho: largo + margen * 2, alto: alto, contenido: contenido };
+  },
+
+  // Línea de medida de arquitectura: marcas inclinadas en los extremos y la medida encima.
+  // La caja mide 8 px más que la cota para que las marcas no se corten.
+  cota: function (elemento) {
+    const largo = elemento.ancho;
+    const alto = elemento.alto;
+    const y = alto * 0.7;
+    const inicio = 4;
+    const fin = largo + 4;
+    const contenido =
+      '<g stroke="' + elemento.color + '" stroke-width="1.5" stroke-linecap="round">' +
+      '<line x1="' + inicio + '" y1="' + y + '" x2="' + fin + '" y2="' + y + '"/>' +
+      '<line x1="' + inicio + '" y1="' + (y - 7) + '" x2="' + inicio + '" y2="' + (y + 5) + '"/>' +
+      '<line x1="' + fin + '" y1="' + (y - 7) + '" x2="' + fin + '" y2="' + (y + 5) + '"/>' +
+      '<line x1="' + (inicio - 4) + '" y1="' + (y + 4) + '" x2="' + (inicio + 4) + '" y2="' + (y - 4) + '" stroke-width="2.5"/>' +
+      '<line x1="' + (fin - 4) + '" y1="' + (y + 4) + '" x2="' + (fin + 4) + '" y2="' + (y - 4) + '" stroke-width="2.5"/></g>' +
+      textoConContorno(largo / 2 + 4, y - 5, formatearMetros(largo * planoConfig.metrosPorPixel), alto * 0.46, elemento.color);
+    return { ancho: largo + 8, alto: alto, contenido: contenido };
+  }
+};
+
+// Vías y redes dibujadas a mano: el mismo estilo que las líneas rectas, pero siguiendo los puntos.
+// Los puntos están guardados respecto al centro del elemento; los corremos para que quepan en la caja.
+// La caja queda centrada en el elemento, así al girarlo gira sobre su centro.
+function correrPuntosALaCaja(elemento, cerrado, margen) {
+  const mitad = mediaCajaDelCamino(elemento.puntos, cerrado, elemento.suavizar);
+  const corrimientoX = mitad.mitadX + margen;
+  const corrimientoY = mitad.mitadY + margen;
+  return {
+    ancho: corrimientoX * 2,
+    alto: corrimientoY * 2,
+    puntos: elemento.puntos.map(function (p) { return [p[0] + corrimientoX, p[1] + corrimientoY]; })
+  };
+}
+
+DIBUJOS.trazo = function (elemento, tipo) {
+  const caja = correrPuntosALaCaja(elemento, false, elemento.grosor);
+  const d = crearCaminoSvg(caja.puntos, false, elemento.suavizar);
+  return { ancho: caja.ancho, alto: caja.alto, contenido: pintarLinea(d, elemento.grosor, elemento.color, tipo) };
+};
+
+// Zonas con forma libre (polígono), con la misma pintura que las zonas rectangulares
+DIBUJOS.poligono = function (elemento) {
+  const caja = correrPuntosALaCaja(elemento, true, 3);
+  const ancho = caja.ancho;
+  const alto = caja.alto;
+  let contenido = pintarZona('<path d="' + crearCaminoSvg(caja.puntos, true, elemento.suavizar) + '"', elemento);
+  if (elemento.mostrarArea) {
+    contenido += textoConContorno(ancho / 2, alto / 2 + 4, formatearArea(calcularArea(elemento)), 12, TRAZO);
+  }
+  return { ancho: ancho, alto: alto, contenido: contenido };
+};
+
+// Arma el SVG completo de un elemento, con su tamaño exacto
+function crearSvgDeElemento(elemento) {
+  const tipo = buscarTipo(elemento.tipoId);
+  const dibujo = DIBUJOS[formaDe(elemento)](elemento, tipo);
+  dibujo.svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + dibujo.ancho + '" height="' + dibujo.alto +
+    '" viewBox="0 0 ' + dibujo.ancho + ' ' + dibujo.alto + '">' + dibujo.contenido + '</svg>';
+  return dibujo;
 }
 
 // Dibuja el aspecto de un elemento dentro de "nodo" (un <div>).
 // Se usa para el mapa y también para las miniaturas del panel.
 function dibujarContenido(nodo, elemento, claseBase) {
   const tipo = buscarTipo(elemento.tipoId);
-  nodo.className = claseBase + ' forma-' + tipo.forma;
+  nodo.className = claseBase + ' forma-' + formaDe(elemento);
   nodo.innerHTML = '';
   nodo.style.cssText = '';
   nodo.style.opacity = elemento.opacidad / 100;
 
-  if (tipo.forma === 'simbolo') {
-    nodo.style.width = elemento.alto + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.innerHTML = crearSvgDeSimbolo(tipo, elemento.color);
+  if (seDibujaConSvg(tipo)) {
+    const dibujo = crearSvgDeElemento(elemento);
+    nodo.style.width = dibujo.ancho + 'px';
+    nodo.style.height = dibujo.alto + 'px';
+    nodo.innerHTML = dibujo.svg;
+    return;
   }
 
-  if (tipo.forma === 'zona') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.style.backgroundColor = colorTransparente(elemento.color, 0.45);
-    nodo.style.borderWidth = '3px';
-    nodo.style.borderColor = elemento.color;
-    nodo.style.borderRadius = tipo.figura === 'elipse' ? '50%' : '10px';
+  // Textos
+  const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
+  nodo.textContent = elemento.texto || ' ';
+  nodo.style.fontSize = elemento.alto + 'px';
+  nodo.style.fontWeight = estilo.peso;
+  nodo.style.color = elemento.color;
+  if (estilo.contorno) {
+    nodo.classList.add('con-contorno');
   }
-
-  if (tipo.forma === 'linea') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    nodo.style.backgroundColor = elemento.color;
-    nodo.style.borderRadius = elemento.alto / 2 + 'px';
-    if (tipo.colorCentro) {
-      const raya = medidasRayaCentral(elemento.alto);
-      const rayaCentral = document.createElement('div');
-      rayaCentral.className = 'linea-centro';
-      rayaCentral.style.left = elemento.alto / 2 + 'px';
-      rayaCentral.style.right = elemento.alto / 2 + 'px';
-      rayaCentral.style.height = raya.grosor + 'px';
-      // Rayas cortadas: un tramo de color y un tramo transparente, repetidos
-      rayaCentral.style.background = 'repeating-linear-gradient(90deg, ' +
-        tipo.colorCentro + ' 0 ' + raya.tramo + 'px, transparent ' + raya.tramo + 'px ' + raya.tramo * 2 + 'px)';
-      nodo.appendChild(rayaCentral);
-    }
-  }
-
-  if (tipo.forma === 'texto') {
-    const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
-    nodo.textContent = elemento.texto || ' ';
-    nodo.style.fontSize = elemento.alto + 'px';
-    nodo.style.fontWeight = estilo.peso;
-    nodo.style.color = elemento.color;
-    if (estilo.contorno) {
-      nodo.classList.add('con-contorno');
-    }
-    if (estilo.fondo) {
-      nodo.classList.add('con-fondo');
-      nodo.style.backgroundColor = estilo.fondo;
-      nodo.style.borderRadius = estilo.pastilla ? '999px' : '6px';
-    }
-  }
-
-  if (tipo.forma === 'flecha') {
-    nodo.style.width = elemento.ancho + 'px';
-    nodo.style.height = elemento.alto + 'px';
-    const puntos = PUNTOS_FLECHA[tipo.figura].map(function (punto) { return punto.join(','); }).join(' ');
-    nodo.innerHTML =
-      '<svg viewBox="0 0 100 50" preserveAspectRatio="none">' +
-      '<polygon points="' + puntos + '" fill="' + elemento.color + '"></polygon></svg>';
+  if (estilo.fondo) {
+    nodo.classList.add('con-fondo');
+    nodo.style.backgroundColor = estilo.fondo;
+    nodo.style.borderRadius = estilo.pastilla ? '999px' : '6px';
   }
 }
 
@@ -605,9 +1070,14 @@ function crearManijas() {
 function refrescarNodo(nodo, elemento) {
   dibujarContenido(nodo, elemento, 'elemento-mapa');
   colocarNodo(nodo, elemento);
-  if (elemento.id === idSeleccionado) {
+  const capa = estadoCapas[buscarTipo(elemento.tipoId).capa];
+  nodo.hidden = !capa.visible;
+  nodo.classList.toggle('bloqueado', capa.bloqueada);
+  if (idsSeleccionados.indexOf(elemento.id) !== -1) {
     nodo.classList.add('seleccionado');
-    nodo.appendChild(crearManijas());
+    if (idsSeleccionados.length === 1) {
+      nodo.appendChild(crearManijas());
+    }
   }
 }
 
@@ -625,6 +1095,7 @@ function dibujarMapa() {
   elementosEnMapa.forEach(function (elemento) {
     capaElementos.appendChild(crearNodoEnMapa(elemento));
   });
+  registrarCambio();
 }
 
 // Vuelve a dibujar un solo elemento (más rápido que redibujar todo)
@@ -633,6 +1104,7 @@ function actualizarNodo(elemento) {
   if (nodo) {
     refrescarNodo(nodo, elemento);
   }
+  registrarCambio();
 }
 
 // --- Dibujar en canvas (para exportar la imagen PNG) ---
@@ -646,21 +1118,20 @@ function trazarRectanguloRedondeado(contexto, x, y, ancho, alto, radio) {
   }
 }
 
-// Convierte el SVG de un símbolo en una imagen que el canvas pueda dibujar.
+// Convierte el SVG de un elemento en una imagen que el canvas pueda dibujar.
 // Cargar una imagen tarda un momento, por eso devuelve una "promesa".
-function cargarImagenDeSimbolo(elemento) {
-  const tipo = buscarTipo(elemento.tipoId);
+function cargarImagenDeElemento(elemento) {
+  const dibujo = crearSvgDeElemento(elemento);
   return new Promise(function (resolver) {
     const imagen = new Image();
     imagen.onload = function () { resolver(imagen); };
     imagen.onerror = function () { resolver(null); };
-    imagen.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(crearSvgDeSimbolo(tipo, elemento.color));
+    imagen.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(dibujo.svg);
   });
 }
 
-function dibujarElementoEnCanvas(contexto, elemento, imagenDelSimbolo) {
+function dibujarElementoEnCanvas(contexto, elemento, imagenDelElemento) {
   const tipo = buscarTipo(elemento.tipoId);
-  const ancho = elemento.ancho;
   const alto = elemento.alto;
 
   contexto.save();
@@ -670,83 +1141,39 @@ function dibujarElementoEnCanvas(contexto, elemento, imagenDelSimbolo) {
   contexto.rotate(elemento.rotacion * Math.PI / 180);
   contexto.globalAlpha = elemento.opacidad / 100;
 
-  if (tipo.forma === 'simbolo' && imagenDelSimbolo) {
-    contexto.drawImage(imagenDelSimbolo, -alto / 2, -alto / 2, alto, alto);
+  if (seDibujaConSvg(tipo)) {
+    if (imagenDelElemento) {
+      const dibujo = crearSvgDeElemento(elemento);
+      contexto.drawImage(imagenDelElemento, -dibujo.ancho / 2, -dibujo.alto / 2, dibujo.ancho, dibujo.alto);
+    }
+    contexto.restore();
+    return;
   }
 
-  if (tipo.forma === 'zona') {
-    if (tipo.figura === 'elipse') {
-      contexto.beginPath();
-      contexto.ellipse(0, 0, ancho / 2 - 1.5, alto / 2 - 1.5, 0, 0, Math.PI * 2);
-    } else {
-      trazarRectanguloRedondeado(contexto, -ancho / 2 + 1.5, -alto / 2 + 1.5, ancho - 3, alto - 3, 9);
-    }
-    contexto.fillStyle = colorTransparente(elemento.color, 0.45);
+  // Textos
+  const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
+  contexto.font = estilo.peso + ' ' + alto + 'px ' + FUENTE_TEXTOS;
+  contexto.textAlign = 'center';
+  contexto.textBaseline = 'middle';
+  if (estilo.fondo) {
+    const anchoCaja = contexto.measureText(elemento.texto).width + alto * 1.4;
+    const altoCaja = alto * 1.8;
+    trazarRectanguloRedondeado(contexto, -anchoCaja / 2, -altoCaja / 2, anchoCaja, altoCaja,
+      estilo.pastilla ? altoCaja / 2 : 6);
+    contexto.fillStyle = estilo.fondo;
     contexto.fill();
-    contexto.lineWidth = 3;
-    contexto.strokeStyle = elemento.color;
+    contexto.lineWidth = 1;
+    contexto.strokeStyle = '#d1d5db';
     contexto.stroke();
   }
-
-  if (tipo.forma === 'linea') {
-    trazarRectanguloRedondeado(contexto, -ancho / 2, -alto / 2, ancho, alto, alto / 2);
-    contexto.fillStyle = elemento.color;
-    contexto.fill();
-    if (tipo.colorCentro) {
-      const raya = medidasRayaCentral(alto);
-      contexto.beginPath();
-      contexto.moveTo(-ancho / 2 + alto / 2, 0);
-      contexto.lineTo(ancho / 2 - alto / 2, 0);
-      contexto.setLineDash([raya.tramo, raya.tramo]);
-      contexto.lineWidth = raya.grosor;
-      contexto.strokeStyle = tipo.colorCentro;
-      contexto.stroke();
-    }
+  if (estilo.contorno) {
+    contexto.lineWidth = alto * 0.15;
+    contexto.lineJoin = 'round';
+    contexto.strokeStyle = '#ffffff';
+    contexto.strokeText(elemento.texto, 0, 0);
   }
-
-  if (tipo.forma === 'texto') {
-    const estilo = ESTILOS_TEXTO[tipo.estiloTexto];
-    contexto.font = estilo.peso + ' ' + alto + 'px ' + FUENTE_TEXTOS;
-    contexto.textAlign = 'center';
-    contexto.textBaseline = 'middle';
-    if (estilo.fondo) {
-      const anchoCaja = contexto.measureText(elemento.texto).width + alto * 1.4;
-      const altoCaja = alto * 1.8;
-      trazarRectanguloRedondeado(contexto, -anchoCaja / 2, -altoCaja / 2, anchoCaja, altoCaja,
-        estilo.pastilla ? altoCaja / 2 : 6);
-      contexto.fillStyle = estilo.fondo;
-      contexto.fill();
-      contexto.lineWidth = 1;
-      contexto.strokeStyle = '#d1d5db';
-      contexto.stroke();
-    }
-    if (estilo.contorno) {
-      contexto.lineWidth = alto * 0.15;
-      contexto.lineJoin = 'round';
-      contexto.strokeStyle = '#ffffff';
-      contexto.strokeText(elemento.texto, 0, 0);
-    }
-    contexto.fillStyle = elemento.color;
-    contexto.fillText(elemento.texto, 0, 0);
-  }
-
-  if (tipo.forma === 'flecha') {
-    contexto.beginPath();
-    PUNTOS_FLECHA[tipo.figura].forEach(function (punto, indice) {
-      // Pasamos de la caja de 100 x 50 al tamaño real, con el centro en (0, 0)
-      const x = punto[0] / 100 * ancho - ancho / 2;
-      const y = punto[1] / 50 * alto - alto / 2;
-      if (indice === 0) {
-        contexto.moveTo(x, y);
-      } else {
-        contexto.lineTo(x, y);
-      }
-    });
-    contexto.closePath();
-    contexto.fillStyle = elemento.color;
-    contexto.fill();
-  }
-
+  contexto.fillStyle = elemento.color;
+  contexto.fillText(elemento.texto, 0, 0);
   contexto.restore();
 }
 
@@ -758,6 +1185,21 @@ function dibujarElementoEnCanvas(contexto, elemento, imagenDelSimbolo) {
 // Quita tildes y mayúsculas para que "arbol" encuentre "Árbol"
 function normalizarTexto(texto) {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+// Llena la lista de "¿Qué quieres dibujar?" con las líneas (vías y redes) y las zonas del catálogo
+function llenarTiposDeTrazo() {
+  [['linea', 'Vías y redes'], ['zona', 'Zonas']].forEach(function (grupo) {
+    const opciones = document.createElement('optgroup');
+    opciones.label = grupo[1];
+    CATALOGO_ELEMENTOS.filter(function (tipo) { return tipo.forma === grupo[0]; }).forEach(function (tipo) {
+      const opcion = document.createElement('option');
+      opcion.value = tipo.id;
+      opcion.textContent = tipo.nombre;
+      opciones.appendChild(opcion);
+    });
+    campoTipoTrazo.appendChild(opciones);
+  });
 }
 
 function mostrarCategorias() {
@@ -800,8 +1242,17 @@ function crearVistaPrevia(tipo) {
     elementoDeMuestra.ancho = 50;
     elementoDeMuestra.alto = 26;
   }
+  if (tipo.forma === 'cota') {
+    elementoDeMuestra.ancho = 44;
+    elementoDeMuestra.alto = 22;
+  }
   const nodo = document.createElement('div');
   dibujarContenido(nodo, elementoDeMuestra, 'vista-previa');
+  // Si la miniatura es más grande que la tarjeta (como la escala gráfica), la achicamos
+  const anchoMiniatura = parseFloat(nodo.style.width) || 0;
+  if (anchoMiniatura > 52) {
+    nodo.style.transform = 'scale(' + (52 / anchoMiniatura) + ')';
+  }
   return nodo;
 }
 
@@ -920,26 +1371,56 @@ function estaSobreElMapa(xPantalla, yPantalla) {
 }
 
 function agregarElementoAlMapa(tipo, x, y) {
-  const elemento = crearDatosElemento(tipo, Math.round(x), Math.round(y));
+  const elemento = crearDatosElemento(tipo, Math.round(ajustarAlIman(x)), Math.round(ajustarAlIman(y)));
   elemento.id = siguienteId;
   siguienteId = siguienteId + 1;
+  // Si su capa estaba oculta o bloqueada, la activamos para que se vea el elemento nuevo
+  if (!sePuedeEditar(elemento)) {
+    estadoCapas[tipo.capa] = { visible: true, bloqueada: false };
+    mostrarAviso('Se activó la capa ' + buscarCapa(tipo.capa).nombre);
+    dibujarMapa();
+  }
   elementosEnMapa.push(elemento);
   capaElementos.appendChild(crearNodoEnMapa(elemento));
   seleccionarElemento(elemento.id);
+  mostrarCapas();
+  registrarCambio();
 }
 
-// Marca un elemento como elegido: le pone el marco con manijas y abre sus propiedades
+// Marca un elemento como elegido: le pone el marco con manijas y abre sus propiedades.
+// Con null no queda nada elegido.
 function seleccionarElemento(id) {
-  idSeleccionado = id;
+  seleccionarVarios(id === null ? [] : [id]);
+}
+
+// Elige una lista de elementos. El último de la lista es el principal:
+// sus datos son los que se ven en el panel de propiedades.
+function seleccionarVarios(ids) {
+  idsSeleccionados = ids.slice();
+  idSeleccionado = ids.length > 0 ? ids[ids.length - 1] : null;
   capaElementos.querySelectorAll('.manijas').forEach(function (manijas) { manijas.remove(); });
   capaElementos.querySelectorAll('.elemento-mapa').forEach(function (nodo) {
-    nodo.classList.toggle('seleccionado', Number(nodo.dataset.id) === id);
+    nodo.classList.toggle('seleccionado', idsSeleccionados.indexOf(Number(nodo.dataset.id)) !== -1);
   });
-  const nodoElegido = buscarNodo(id);
-  if (nodoElegido) {
+  // Las manijas solo salen cuando hay un único elemento elegido
+  const nodoElegido = buscarNodo(idSeleccionado);
+  if (nodoElegido && idsSeleccionados.length === 1) {
     nodoElegido.appendChild(crearManijas());
   }
   mostrarPropiedades();
+}
+
+// Suma un elemento a la selección, o lo quita si ya estaba
+function alternarEnSeleccion(id) {
+  if (idsSeleccionados.indexOf(id) === -1) {
+    seleccionarVarios(idsSeleccionados.concat([id]));
+  } else {
+    seleccionarVarios(idsSeleccionados.filter(function (otro) { return otro !== id; }));
+  }
+}
+
+function elementosSeleccionados() {
+  return elementosEnMapa.filter(function (elemento) { return idsSeleccionados.indexOf(elemento.id) !== -1; });
 }
 
 // Centro del elemento en la pantalla (sirve para girar y cambiar el tamaño)
@@ -957,7 +1438,13 @@ function empezarAccionSobreElemento(evento) {
   const elemento = buscarElemento(Number(nodo.dataset.id));
   const accion = evento.target.dataset.accion || 'mover';
 
-  if (elemento.id !== idSeleccionado) {
+  // Con Mayúsculas (o con "Varios" activado) se suman elementos a la selección
+  if (evento.shiftKey || modoVarios) {
+    alternarEnSeleccion(elemento.id);
+    if (idsSeleccionados.indexOf(elemento.id) === -1) {
+      return; // lo acabamos de quitar: no hay nada que mover
+    }
+  } else if (idsSeleccionados.indexOf(elemento.id) === -1) {
     seleccionarElemento(elemento.id);
   }
   document.body.dataset.pestana = 'propiedades'; // en el móvil, abre la pestaña Editar
@@ -980,8 +1467,11 @@ function empezarAccionSobreElemento(evento) {
     xOriginal: elemento.x,
     yOriginal: elemento.y,
     altoOriginal: elemento.alto,
+    puntosOriginales: elemento.puntos ? elemento.puntos.map(function (p) { return p.slice(); }) : null,
     centro: centro,
-    distanciaInicial: Math.max(1, Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y))
+    distanciaInicial: Math.max(1, Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y)),
+    // Si hay varios elegidos, se mueven todos juntos: guardamos dónde estaba cada uno
+    grupo: elementosSeleccionados().map(function (otro) { return { elemento: otro, x: otro.x, y: otro.y }; })
   };
 }
 
@@ -989,9 +1479,19 @@ function moverElemento(evento) {
   const elemento = accionEnCurso.elemento;
   const desplazamientoX = (evento.clientX - accionEnCurso.inicioX) / nivelZoom;
   const desplazamientoY = (evento.clientY - accionEnCurso.inicioY) / nivelZoom;
-  elemento.x = Math.round(limitar(accionEnCurso.xOriginal + desplazamientoX, 0, ANCHO_LIENZO));
-  elemento.y = Math.round(limitar(accionEnCurso.yOriginal + desplazamientoY, 0, ALTO_LIENZO));
+  elemento.x = Math.round(ajustarAlIman(limitar(accionEnCurso.xOriginal + desplazamientoX, 0, ANCHO_LIENZO)));
+  elemento.y = Math.round(ajustarAlIman(limitar(accionEnCurso.yOriginal + desplazamientoY, 0, ALTO_LIENZO)));
   colocarNodo(accionEnCurso.nodo, elemento);
+  // Los demás elegidos se corren lo mismo que el principal
+  const corridoX = elemento.x - accionEnCurso.xOriginal;
+  const corridoY = elemento.y - accionEnCurso.yOriginal;
+  accionEnCurso.grupo.forEach(function (parte) {
+    if (parte.elemento !== elemento) {
+      parte.elemento.x = limitar(parte.x + corridoX, 0, ANCHO_LIENZO);
+      parte.elemento.y = limitar(parte.y + corridoY, 0, ALTO_LIENZO);
+      colocarNodo(buscarNodo(parte.elemento.id), parte.elemento);
+    }
+  });
 }
 
 // El ángulo sale de la posición del puntero respecto al centro del elemento.
@@ -1018,9 +1518,14 @@ function cambiarTamanoConManija(evento) {
   const tipo = buscarTipo(elemento.tipoId);
   const centro = accionEnCurso.centro;
 
-  if (usaTamanoUnico(tipo)) {
+  const factor = Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y) / accionEnCurso.distanciaInicial;
+  if (esDibujoLibre(elemento)) {
+    // Los dibujos a mano crecen o se achican completos, multiplicando sus puntos
+    elemento.puntos = accionEnCurso.puntosOriginales.map(function (p) {
+      return [Math.round(p[0] * factor * 10) / 10, Math.round(p[1] * factor * 10) / 10];
+    });
+  } else if (usaTamanoUnico(elemento)) {
     // Si alejas el puntero del centro al doble de distancia, el elemento crece al doble
-    const factor = Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y) / accionEnCurso.distanciaInicial;
     elemento.alto = Math.round(limitar(accionEnCurso.altoOriginal * factor, LIMITES.tamano.minimo, LIMITES.tamano.maximo));
     elemento.ancho = elemento.alto;
   } else {
@@ -1032,8 +1537,7 @@ function cambiarTamanoConManija(evento) {
     const xPropia = dx * Math.cos(radianes) + dy * Math.sin(radianes);
     const yPropia = -dx * Math.sin(radianes) + dy * Math.cos(radianes);
     elemento.ancho = Math.round(limitar(Math.abs(xPropia) * 2, LIMITES.ancho.minimo, LIMITES.ancho.maximo));
-    if (tipo.forma !== 'linea') {
-      // En las líneas la manija solo cambia el largo; el grosor se cambia en el panel
+    if (!soloCambiaElLargo(elemento)) {
       elemento.alto = Math.round(limitar(Math.abs(yPropia) * 2, LIMITES.alto.minimo, LIMITES.alto.maximo));
     }
   }
@@ -1044,6 +1548,14 @@ function cambiarTamanoConManija(evento) {
 // Con el ratón, arrastrar el fondo mueve la vista del mapa.
 // (En el móvil esto ya lo hace el navegador al deslizar el dedo.)
 function empezarPaneo(evento) {
+  if (herramienta === 'medir') {
+    empezarMedicion(evento);
+    return;
+  }
+  if (herramienta === 'dibujar') {
+    empezarODibujarPunto(evento);
+    return;
+  }
   if (evento.target.closest('.elemento-mapa')) {
     return;
   }
@@ -1064,8 +1576,182 @@ function moverPaneo(evento) {
   contenedorLienzo.scrollTop = paneoEnCurso.scrollArriba - (evento.clientY - paneoEnCurso.inicioY);
 }
 
+// --- Herramienta Medir: arrastrar sobre el mapa crea una cota ---
+
+function empezarMedicion(evento) {
+  evento.preventDefault();
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  const inicio = { x: ajustarAlIman(punto.x), y: ajustarAlIman(punto.y) };
+  const elemento = crearDatosElemento(buscarTipo('cota'), inicio.x, inicio.y);
+  elemento.id = siguienteId;
+  siguienteId = siguienteId + 1;
+  elemento.ancho = 1;
+  elementosEnMapa.push(elemento);
+  const nodo = crearNodoEnMapa(elemento);
+  capaElementos.appendChild(nodo);
+  medicionEnCurso = { elemento: elemento, nodo: nodo, inicio: inicio };
+}
+
+function moverMedicion(evento) {
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  const fin = { x: ajustarAlIman(punto.x), y: ajustarAlIman(punto.y) };
+  const inicio = medicionEnCurso.inicio;
+  const elemento = medicionEnCurso.elemento;
+  // La cota va del punto inicial al final: su centro es el punto medio
+  // y su giro es el ángulo de la línea que los une.
+  let angulo = Math.atan2(fin.y - inicio.y, fin.x - inicio.x) * 180 / Math.PI;
+  // Para que el texto nunca quede de cabeza, dejamos el ángulo entre -90° y 90°
+  if (angulo > 90) {
+    angulo = angulo - 180;
+  }
+  if (angulo <= -90) {
+    angulo = angulo + 180;
+  }
+  elemento.x = Math.round((inicio.x + fin.x) / 2);
+  elemento.y = Math.round((inicio.y + fin.y) / 2);
+  elemento.ancho = Math.max(1, Math.round(Math.hypot(fin.x - inicio.x, fin.y - inicio.y)));
+  elemento.rotacion = Math.round(angulo);
+  refrescarNodo(medicionEnCurso.nodo, elemento);
+}
+
+function terminarMedicion() {
+  const elemento = medicionEnCurso.elemento;
+  medicionEnCurso = null;
+  cambiarHerramienta('seleccionar');
+  if (elemento.ancho < 5) {
+    // Fue solo un toque: no hay nada que medir
+    elementosEnMapa = elementosEnMapa.filter(function (otro) { return otro !== elemento; });
+    dibujarMapa();
+    return;
+  }
+  seleccionarElemento(elemento.id);
+  mostrarAviso('Medida: ' + formatearMetros(elemento.ancho * planoConfig.metrosPorPixel));
+}
+
+// --- Herramienta Dibujar: cada toque agrega un punto a una vía, red o zona ---
+
+function empezarODibujarPunto(evento) {
+  evento.preventDefault();
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  const nuevo = [ajustarAlIman(punto.x), ajustarAlIman(punto.y)];
+  const ultimo = dibujoEnCurso.puntos[dibujoEnCurso.puntos.length - 1];
+  // Un doble clic toca dos veces el mismo lugar: no repetimos el punto
+  if (!ultimo || Math.hypot(ultimo[0] - nuevo[0], ultimo[1] - nuevo[1]) > 2) {
+    dibujoEnCurso.puntos.push(nuevo);
+  }
+  dibujoEnCurso.cursor = nuevo;
+  dibujarGuia();
+}
+
+function moverCursorDeDibujo(evento) {
+  if (!estaSobreElMapa(evento.clientX, evento.clientY)) {
+    return;
+  }
+  const punto = obtenerCoordenadasEnLienzo(evento.clientX, evento.clientY);
+  dibujoEnCurso.cursor = [ajustarAlIman(punto.x), ajustarAlIman(punto.y)];
+  dibujarGuia();
+}
+
+// Línea de ayuda mientras se dibuja: los puntos puestos y un tramo hasta el puntero
+function dibujarGuia() {
+  const tipo = dibujoEnCurso.tipo;
+  const esZona = tipo.forma === 'zona';
+  const puntos = dibujoEnCurso.puntos.slice();
+  if (dibujoEnCurso.cursor) {
+    puntos.push(dibujoEnCurso.cursor);
+  }
+  let contenido = '';
+  if (puntos.length >= 2) {
+    const d = crearCaminoSvg(puntos, esZona && puntos.length > 2, campoSuavizarDibujo.checked);
+    contenido += esZona
+      ? '<path d="' + d + '" fill="' + colorTransparente(tipo.color, 0.35) + '" stroke="' + tipo.color + '" stroke-width="2" stroke-dasharray="6 4"/>'
+      : '<path d="' + d + '" fill="none" stroke="' + tipo.color + '" stroke-width="' + Math.max(3, tipo.alto) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>';
+  }
+  dibujoEnCurso.puntos.forEach(function (p) {
+    contenido += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>';
+  });
+  guiaDibujo.innerHTML = contenido;
+}
+
+function terminarDibujo() {
+  if (!dibujoEnCurso) {
+    return;
+  }
+  const tipo = dibujoEnCurso.tipo;
+  const puntos = dibujoEnCurso.puntos;
+  const minimo = tipo.forma === 'zona' ? 3 : 2;
+  if (puntos.length < minimo) {
+    mostrarAviso(tipo.forma === 'zona' ? 'Una zona necesita al menos 3 puntos' : 'Una vía necesita al menos 2 puntos');
+    return;
+  }
+  // El centro del elemento es el centro de la caja de puntos; guardamos los puntos respecto a él
+  const caja = cajaDePuntos(puntos);
+  const centroX = (caja.minX + caja.maxX) / 2;
+  const centroY = (caja.minY + caja.maxY) / 2;
+  const elemento = crearDatosElemento(tipo, centroX, centroY);
+  elemento.id = siguienteId;
+  siguienteId = siguienteId + 1;
+  elemento.puntos = puntos.map(function (p) { return [p[0] - centroX, p[1] - centroY]; });
+  elemento.suavizar = campoSuavizarDibujo.checked;
+  elemento.grosor = tipo.forma === 'zona' ? 0 : tipo.alto;
+  dibujoEnCurso = null;
+  guiaDibujo.innerHTML = '';
+  cambiarHerramienta('seleccionar');
+  if (!sePuedeEditar(elemento)) {
+    estadoCapas[tipo.capa] = { visible: true, bloqueada: false };
+  }
+  elementosEnMapa.push(elemento);
+  dibujarMapa();
+  seleccionarElemento(elemento.id);
+  mostrarCapas();
+}
+
+function cancelarDibujo() {
+  dibujoEnCurso = null;
+  guiaDibujo.innerHTML = '';
+  cambiarHerramienta('seleccionar');
+}
+
+function quitarUltimoPunto() {
+  if (dibujoEnCurso && dibujoEnCurso.puntos.length > 0) {
+    dibujoEnCurso.puntos.pop();
+    dibujarGuia();
+  }
+}
+
+function empezarHerramientaDibujar() {
+  const tipo = buscarTipo(campoTipoTrazo.value);
+  dibujoEnCurso = { tipo: tipo, puntos: [], cursor: null };
+  cambiarHerramienta('dibujar');
+  mostrarAviso('Toca el mapa para poner puntos. Doble clic o "Terminar" para acabar.');
+}
+
+function cambiarHerramienta(nombre) {
+  if (herramienta === 'dibujar' && nombre !== 'dibujar' && dibujoEnCurso) {
+    dibujoEnCurso = null;
+    guiaDibujo.innerHTML = '';
+  }
+  herramienta = nombre;
+  barraDibujo.hidden = nombre !== 'dibujar';
+  document.getElementById('boton-dibujar').classList.toggle('activa', nombre === 'dibujar');
+  document.body.dataset.herramienta = nombre;
+  document.querySelectorAll('[data-herramienta]').forEach(function (boton) {
+    boton.classList.toggle('activa', boton.dataset.herramienta === nombre);
+  });
+  if (nombre === 'medir') {
+    seleccionarElemento(null);
+    mostrarAviso('Arrastra sobre el mapa para medir una distancia');
+  }
+}
+
 // Un solo lugar escucha el movimiento del puntero para todos los tipos de arrastre
 function alMoverPuntero(evento) {
+  if (medicionEnCurso) {
+    moverMedicion(evento);
+  }
+  if (dibujoEnCurso) {
+    moverCursorDeDibujo(evento);
+  }
   if (arrastreDesdePanel) {
     moverArrastreDesdePanel(evento);
   }
@@ -1087,6 +1773,12 @@ function alSoltarPuntero(evento) {
   if (arrastreDesdePanel) {
     terminarArrastreDesdePanel(evento);
   }
+  if (medicionEnCurso) {
+    terminarMedicion();
+  }
+  if (accionEnCurso) {
+    registrarCambio(); // al soltar, el movimiento queda guardado para poder deshacerlo
+  }
   accionEnCurso = null;
   paneoEnCurso = null;
   contenedorLienzo.classList.remove('paneando');
@@ -1094,6 +1786,9 @@ function alSoltarPuntero(evento) {
 
 function alCancelarPuntero() {
   cancelarArrastreDesdePanel();
+  if (medicionEnCurso) {
+    terminarMedicion();
+  }
   accionEnCurso = null;
   paneoEnCurso = null;
   contenedorLienzo.classList.remove('paneando');
@@ -1113,16 +1808,32 @@ function mostrarPropiedades() {
   }
 
   const tipo = buscarTipo(elemento.tipoId);
-  tituloElemento.textContent = tipo.nombre;
+  const cantidad = idsSeleccionados.length;
+  tituloElemento.textContent = cantidad > 1 ? cantidad + ' elementos elegidos' : tipo.nombre;
+  document.getElementById('grupo-alinear').hidden = cantidad < 2;
+  document.querySelectorAll('[data-distribuir]').forEach(function (boton) { boton.disabled = cantidad < 3; });
+  document.getElementById('texto-capa-elemento').textContent = 'Capa: ' + buscarCapa(tipo.capa).nombre;
 
   // Cada forma muestra solo los controles que tienen sentido para ella
-  const tamanoUnico = usaTamanoUnico(tipo);
-  document.getElementById('grupo-texto').hidden = tipo.forma !== 'texto';
+  const forma = formaDe(elemento);
+  const tamanoUnico = usaTamanoUnico(elemento);
+  const libre = esDibujoLibre(elemento);
+  document.getElementById('grupo-texto').hidden = forma !== 'texto';
   document.getElementById('grupo-tamano').hidden = !tamanoUnico;
-  document.getElementById('grupo-ancho').hidden = tamanoUnico;
-  document.getElementById('grupo-alto').hidden = tamanoUnico;
-  document.getElementById('nombre-ancho').textContent = tipo.forma === 'linea' ? 'Largo' : 'Ancho';
-  document.getElementById('nombre-alto').textContent = tipo.forma === 'linea' ? 'Grosor' : 'Alto';
+  document.getElementById('grupo-ancho').hidden = tamanoUnico || libre;
+  document.getElementById('grupo-alto').hidden = tamanoUnico || libre || forma === 'cota';
+  document.getElementById('grupo-area').hidden = forma !== 'zona' && forma !== 'poligono';
+  document.getElementById('grupo-trama').hidden = forma !== 'zona' && forma !== 'poligono';
+  campoTrama.value = elemento.trama || 'ninguna';
+  document.getElementById('grupo-medida').hidden = forma !== 'cota';
+  document.getElementById('grupo-trazo').hidden = !libre;
+  document.getElementById('grupo-grosor').hidden = forma !== 'trazo';
+  document.getElementById('grupo-largo').hidden = forma !== 'trazo';
+  campoMostrarArea.checked = Boolean(elemento.mostrarArea);
+  campoSuavizar.checked = Boolean(elemento.suavizar);
+  campoGrosor.value = elemento.grosor || 1;
+  document.getElementById('nombre-ancho').textContent = soloCambiaElLargo(elemento) ? 'Largo' : 'Ancho';
+  document.getElementById('nombre-alto').textContent = forma === 'linea' ? 'Grosor' : 'Alto';
 
   if (document.activeElement !== campoTexto) {
     campoTexto.value = elemento.texto;
@@ -1142,24 +1853,53 @@ function mostrarValoresDeDeslizadores(elemento) {
   document.getElementById('valor-alto').textContent = elemento.alto + ' px';
   document.getElementById('valor-rotacion').textContent = elemento.rotacion + '°';
   document.getElementById('valor-opacidad').textContent = elemento.opacidad + '%';
+  const forma = formaDe(elemento);
+  if (forma === 'zona' || forma === 'poligono') {
+    document.getElementById('valor-area').textContent = formatearArea(calcularArea(elemento));
+  }
+  if (forma === 'trazo') {
+    document.getElementById('valor-largo').textContent = formatearMetros(largoDeTrazo(elemento.puntos) * planoConfig.metrosPorPixel);
+    document.getElementById('valor-grosor').textContent = elemento.grosor + ' px';
+  }
+  if (forma === 'cota') {
+    document.getElementById('valor-medida').textContent = formatearMetros(elemento.ancho * planoConfig.metrosPorPixel);
+  }
 }
 
-// Aplica un cambio al elemento seleccionado y lo vuelve a dibujar
-function cambiarElementoSeleccionado(aplicarCambio) {
+// Calibrar: si esta cota mide X metros en la realidad, cada píxel vale X / largo
+function calibrarConCota() {
   const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
+  const medidaReal = Number(campoMedidaReal.value.replace(',', '.'));
+  if (!elemento || !(medidaReal > 0)) {
+    mostrarAviso('Escribe la medida real en metros, por ejemplo 25');
     return;
   }
-  aplicarCambio(elemento);
-  actualizarNodo(elemento);
-  mostrarValoresDeDeslizadores(elemento);
+  planoConfig.metrosPorPixel = medidaReal / elemento.ancho;
+  aplicarPlano();
+  dibujarMapa();
+  seleccionarElemento(elemento.id);
+  mostrarAviso('Escala calibrada: 1 px = ' + planoConfig.metrosPorPixel.toLocaleString('es-CO', { maximumFractionDigits: 3 }) + ' m');
+}
+
+// Aplica un cambio a los elementos elegidos y los vuelve a dibujar
+function cambiarElementoSeleccionado(aplicarCambio) {
+  const principal = buscarElemento(idSeleccionado);
+  if (!principal) {
+    return;
+  }
+  elementosSeleccionados().forEach(function (elemento) {
+    aplicarCambio(elemento);
+    actualizarNodo(elemento);
+  });
+  mostrarValoresDeDeslizadores(principal);
 }
 
 // Aumentar o disminuir el tamaño multiplicando por un factor (1.15 o 0.87)
 function cambiarTamanoPorFactor(factor) {
   cambiarElementoSeleccionado(function (elemento) {
-    const tipo = buscarTipo(elemento.tipoId);
-    if (usaTamanoUnico(tipo)) {
+    if (esDibujoLibre(elemento)) {
+      elemento.puntos = elemento.puntos.map(function (p) { return [p[0] * factor, p[1] * factor]; });
+    } else if (usaTamanoUnico(elemento)) {
       elemento.alto = Math.round(limitar(elemento.alto * factor, LIMITES.tamano.minimo, LIMITES.tamano.maximo));
       elemento.ancho = elemento.alto;
     } else {
@@ -1179,39 +1919,193 @@ function girarPorBotones(grados, volverACero) {
 }
 
 function moverElementoEnCapas(haciaElFrente) {
-  const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length === 0) {
     return;
   }
   // El orden de la lista es el orden de dibujo: el último queda encima
-  elementosEnMapa = elementosEnMapa.filter(function (otro) { return otro !== elemento; });
-  if (haciaElFrente) {
-    elementosEnMapa.push(elemento);
-  } else {
-    elementosEnMapa.unshift(elemento);
-  }
+  const resto = elementosEnMapa.filter(function (otro) { return elegidos.indexOf(otro) === -1; });
+  elementosEnMapa = haciaElFrente ? resto.concat(elegidos) : elegidos.concat(resto);
   dibujarMapa();
+}
+
+// Agrega copias de unos elementos, corridas un poco, y las deja elegidas
+function agregarCopias(elementos, corrimiento) {
+  const idsNuevos = elementos.map(function (elemento) {
+    const copia = JSON.parse(JSON.stringify(elemento));
+    copia.id = siguienteId;
+    siguienteId = siguienteId + 1;
+    copia.x = limitar(elemento.x + corrimiento, 0, ANCHO_LIENZO);
+    copia.y = limitar(elemento.y + corrimiento, 0, ALTO_LIENZO);
+    elementosEnMapa.push(copia);
+    return copia.id;
+  });
+  dibujarMapa();
+  seleccionarVarios(idsNuevos);
+  mostrarCapas();
 }
 
 function duplicarElemento() {
-  const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
-    return;
+  if (idsSeleccionados.length > 0) {
+    agregarCopias(elementosSeleccionados(), 20);
   }
-  const copia = Object.assign({}, elemento);
-  copia.id = siguienteId;
-  siguienteId = siguienteId + 1;
-  copia.x = limitar(elemento.x + 20, 0, ANCHO_LIENZO);
-  copia.y = limitar(elemento.y + 20, 0, ALTO_LIENZO);
-  elementosEnMapa.push(copia);
-  capaElementos.appendChild(crearNodoEnMapa(copia));
-  seleccionarElemento(copia.id);
 }
 
 function eliminarElemento() {
-  elementosEnMapa = elementosEnMapa.filter(function (elemento) { return elemento.id !== idSeleccionado; });
+  elementosEnMapa = elementosEnMapa.filter(function (elemento) { return idsSeleccionados.indexOf(elemento.id) === -1; });
   dibujarMapa();
   seleccionarElemento(null);
+  mostrarCapas();
+}
+
+// --- Copiar y pegar (Ctrl + C y Ctrl + V) ---
+
+function copiarSeleccion() {
+  if (idsSeleccionados.length === 0) {
+    return;
+  }
+  portapapeles = JSON.parse(JSON.stringify(elementosSeleccionados()));
+  vecesPegado = 0;
+  mostrarAviso(portapapeles.length === 1 ? 'Elemento copiado' : portapapeles.length + ' elementos copiados');
+}
+
+function pegarCopia() {
+  if (portapapeles.length === 0) {
+    return;
+  }
+  // Cada vez que pegas, la copia queda un poco más corrida para que no tape a la anterior
+  vecesPegado = vecesPegado + 1;
+  agregarCopias(portapapeles.filter(function (elemento) { return buscarTipo(elemento.tipoId); }), 20 * vecesPegado);
+}
+
+// --- Alinear y repartir varios elementos ---
+
+// Caja de un elemento sin contar el giro: centro ± la mitad de lo que mide su dibujo
+function cajaDelElemento(elemento) {
+  const nodo = buscarNodo(elemento.id);
+  const ancho = nodo ? nodo.offsetWidth : elemento.ancho;
+  const alto = nodo ? nodo.offsetHeight : elemento.alto;
+  return { izquierda: elemento.x - ancho / 2, derecha: elemento.x + ancho / 2, arriba: elemento.y - alto / 2, abajo: elemento.y + alto / 2, ancho: ancho, alto: alto };
+}
+
+function alinearSeleccion(modo) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length < 2) {
+    return;
+  }
+  const cajas = elegidos.map(cajaDelElemento);
+  const izquierda = Math.min.apply(null, cajas.map(function (c) { return c.izquierda; }));
+  const derecha = Math.max.apply(null, cajas.map(function (c) { return c.derecha; }));
+  const arriba = Math.min.apply(null, cajas.map(function (c) { return c.arriba; }));
+  const abajo = Math.max.apply(null, cajas.map(function (c) { return c.abajo; }));
+  elegidos.forEach(function (elemento, indice) {
+    const caja = cajas[indice];
+    if (modo === 'izquierda') { elemento.x = izquierda + caja.ancho / 2; }
+    if (modo === 'centro') { elemento.x = (izquierda + derecha) / 2; }
+    if (modo === 'derecha') { elemento.x = derecha - caja.ancho / 2; }
+    if (modo === 'arriba') { elemento.y = arriba + caja.alto / 2; }
+    if (modo === 'medio') { elemento.y = (arriba + abajo) / 2; }
+    if (modo === 'abajo') { elemento.y = abajo - caja.alto / 2; }
+    elemento.x = Math.round(elemento.x);
+    elemento.y = Math.round(elemento.y);
+    actualizarNodo(elemento);
+  });
+}
+
+// Reparte los elegidos a la misma distancia entre el primero y el último
+function repartirSeleccion(eje) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length < 3) {
+    return;
+  }
+  elegidos.sort(function (a, b) { return a[eje] - b[eje]; });
+  const primero = elegidos[0][eje];
+  const paso = (elegidos[elegidos.length - 1][eje] - primero) / (elegidos.length - 1);
+  elegidos.forEach(function (elemento, indice) {
+    elemento[eje] = Math.round(primero + paso * indice);
+    actualizarNodo(elemento);
+  });
+}
+
+// Flechas del teclado: 1 px por toque, 10 px con Mayúsculas (o un cuadro si el imán está activo)
+function empujarSeleccion(dx, dy, largo) {
+  const paso = largo ? (planoConfig.imanActivo ? planoConfig.tamanoCuadricula : 10) : 1;
+  elementosSeleccionados().forEach(function (elemento) {
+    elemento.x = limitar(elemento.x + dx * paso, 0, ANCHO_LIENZO);
+    elemento.y = limitar(elemento.y + dy * paso, 0, ALTO_LIENZO);
+    actualizarNodo(elemento);
+  });
+}
+
+// --- Deshacer y rehacer ---
+// Cada cambio guarda una "foto" del mapa (sus elementos como texto JSON).
+// Esperamos un momento antes de guardarla, para que mover un deslizador cuente como un solo cambio.
+
+function registrarCambio() {
+  clearTimeout(registrarCambio.temporizador);
+  registrarCambio.temporizador = setTimeout(guardarEnHistorial, 300);
+}
+
+function guardarEnHistorial() {
+  clearTimeout(registrarCambio.temporizador);
+  if (accionEnCurso || medicionEnCurso) {
+    registrarCambio(); // todavía estás arrastrando: lo guardamos cuando sueltes
+    return;
+  }
+  const foto = JSON.stringify(elementosEnMapa);
+  if (foto === historial[posicionEnHistorial]) {
+    return;
+  }
+  // Si habías deshecho algo y haces un cambio nuevo, lo deshecho ya no se puede rehacer
+  historial = historial.slice(0, posicionEnHistorial + 1);
+  historial.push(foto);
+  if (historial.length > 80) {
+    historial.shift();
+  }
+  posicionEnHistorial = historial.length - 1;
+  actualizarBotonesDeHistorial();
+}
+
+function volverAFoto(nuevaPosicion) {
+  posicionEnHistorial = nuevaPosicion;
+  elementosEnMapa = JSON.parse(historial[posicionEnHistorial]);
+  siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, siguienteId - 1) + 1;
+  const quedan = idsSeleccionados.filter(function (id) { return buscarElemento(id); });
+  dibujarMapa();
+  seleccionarVarios(quedan);
+  mostrarCapas();
+  actualizarBotonesDeHistorial();
+}
+
+function deshacer() {
+  guardarEnHistorial(); // por si había un cambio esperando a guardarse
+  if (posicionEnHistorial > 0) {
+    volverAFoto(posicionEnHistorial - 1);
+  }
+}
+
+function rehacer() {
+  guardarEnHistorial();
+  if (posicionEnHistorial < historial.length - 1) {
+    volverAFoto(posicionEnHistorial + 1);
+  }
+}
+
+function empezarHistorialNuevo() {
+  historial = [JSON.stringify(elementosEnMapa)];
+  posicionEnHistorial = 0;
+  actualizarBotonesDeHistorial();
+}
+
+function actualizarBotonesDeHistorial() {
+  document.getElementById('boton-deshacer').disabled = posicionEnHistorial <= 0;
+  document.getElementById('boton-rehacer').disabled = posicionEnHistorial >= historial.length - 1;
+}
+
+function cambiarModoVarios() {
+  modoVarios = !modoVarios;
+  document.getElementById('boton-varios').classList.toggle('activa', modoVarios);
+  mostrarAviso(modoVarios ? 'Toca varios elementos para elegirlos juntos' : 'Selección de uno en uno');
 }
 
 
@@ -1228,6 +2122,80 @@ function aplicarFondo() {
   campoVisibilidad.value = fondoDelMapa.visibilidad;
   campoTenido.checked = fondoDelMapa.tenido;
   document.getElementById('valor-visibilidad').textContent = fondoDelMapa.visibilidad + '%';
+}
+
+function buscarCapa(capaId) {
+  return CAPAS.find(function (capa) { return capa.id === capaId; });
+}
+
+// Dibuja la lista de capas en el panel: casilla para verla y botón para bloquearla
+function mostrarCapas() {
+  listaCapas.innerHTML = '';
+  CAPAS.forEach(function (capa) {
+    const estado = estadoCapas[capa.id];
+    const cantidad = elementosEnMapa.filter(function (elemento) {
+      return buscarTipo(elemento.tipoId).capa === capa.id;
+    }).length;
+
+    const fila = document.createElement('li');
+    fila.className = 'fila-capa';
+    if (!estado.visible) {
+      fila.classList.add('capa-oculta');
+    }
+
+    const etiqueta = document.createElement('label');
+    etiqueta.className = 'fila-capa-nombre';
+    const casilla = document.createElement('input');
+    casilla.type = 'checkbox';
+    casilla.checked = estado.visible;
+    casilla.addEventListener('change', function () {
+      estado.visible = casilla.checked;
+      actualizarTrasCambiarCapas();
+    });
+    etiqueta.appendChild(casilla);
+    etiqueta.appendChild(document.createTextNode(' ' + capa.nombre + ' (' + cantidad + ')'));
+
+    const botonBloquear = document.createElement('button');
+    botonBloquear.className = 'boton-bloquear';
+    botonBloquear.textContent = estado.bloqueada ? 'Bloqueada' : 'Bloquear';
+    botonBloquear.classList.toggle('activa', estado.bloqueada);
+    botonBloquear.title = estado.bloqueada ? 'Desbloquear esta capa' : 'Bloquear: no se podrá mover ni editar';
+    botonBloquear.addEventListener('click', function () {
+      estado.bloqueada = !estado.bloqueada;
+      actualizarTrasCambiarCapas();
+    });
+
+    fila.appendChild(etiqueta);
+    fila.appendChild(botonBloquear);
+    listaCapas.appendChild(fila);
+  });
+}
+
+function actualizarTrasCambiarCapas() {
+  dibujarMapa();
+  // Si una capa quedó oculta o bloqueada, sus elementos dejan de estar elegidos
+  seleccionarVarios(idsSeleccionados.filter(function (id) { return sePuedeEditar(buscarElemento(id)); }));
+  mostrarCapas();
+  mostrarPropiedades();
+}
+
+function mostrarTodasLasCapas() {
+  estadoCapas = crearEstadoCapasInicial();
+  actualizarTrasCambiarCapas();
+}
+
+// Muestra la cuadrícula y pone los valores de la escala en el panel
+function aplicarPlano() {
+  capaCuadricula.hidden = !planoConfig.cuadriculaVisible;
+  capaCuadricula.style.backgroundSize = planoConfig.tamanoCuadricula + 'px ' + planoConfig.tamanoCuadricula + 'px';
+  campoMetrosPixel.value = Number(planoConfig.metrosPorPixel.toFixed(3));
+  campoMostrarCuadricula.checked = planoConfig.cuadriculaVisible;
+  campoTamanoCuadricula.value = String(planoConfig.tamanoCuadricula);
+  campoIman.checked = planoConfig.imanActivo;
+  document.getElementById('valor-cuadricula-metros').textContent =
+    'cada cuadro ≈ ' + formatearMetros(planoConfig.tamanoCuadricula * planoConfig.metrosPorPixel);
+  document.getElementById('boton-cuadricula').classList.toggle('activa', planoConfig.cuadriculaVisible);
+  document.getElementById('boton-iman').classList.toggle('activa', planoConfig.imanActivo);
 }
 
 // El mapa se amplía con "scale". El marco que lo rodea cambia de tamaño
@@ -1273,6 +2241,9 @@ function obtenerDatosDelMapa() {
     nombre: nombreDelMapa,
     fecha: new Date().toISOString(),
     fondo: Object.assign({}, fondoDelMapa),
+    plano: Object.assign({}, planoConfig),
+    capas: JSON.parse(JSON.stringify(estadoCapas)),
+    hoja: Object.assign({}, hojaConfig),
     elementos: elementosEnMapa.map(function (elemento) { return Object.assign({}, elemento); })
   };
 }
@@ -1280,13 +2251,20 @@ function obtenerDatosDelMapa() {
 function cargarDatosDelMapa(datos) {
   nombreDelMapa = datos.nombre || 'Mi mapa de Siloé';
   fondoDelMapa = Object.assign({ color: '#ffffff', visibilidad: 100, tenido: false }, datos.fondo);
+  planoConfig = Object.assign({ metrosPorPixel: 1.5, cuadriculaVisible: false, tamanoCuadricula: 20, imanActivo: false }, datos.plano);
+  estadoCapas = Object.assign(crearEstadoCapasInicial(), datos.capas);
+  hojaConfig = Object.assign({ formato: 'carta', calidad: 150, titulo: '', autor: '', fecha: '', leyenda: true }, datos.hoja);
   // Ignoramos elementos cuyo tipo ya no exista en el catálogo
   elementosEnMapa = (datos.elementos || []).filter(function (elemento) { return buscarTipo(elemento.tipoId); });
   siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, 0) + 1;
   idSeleccionado = null;
+  idsSeleccionados = [];
   aplicarFondo();
+  aplicarPlano();
   dibujarMapa();
+  mostrarCapas();
   mostrarPropiedades();
+  empezarHistorialNuevo();
 }
 
 // Los mapas se guardan en el navegador (localStorage) como texto JSON
@@ -1387,20 +2365,9 @@ function descargarArchivo(nombreArchivo, direccion) {
   enlace.remove();
 }
 
-// Dibuja el mapa completo en un <canvas> y lo descarga como PNG.
-// Es "async" porque primero hay que esperar a que carguen las imágenes de los símbolos.
-async function exportarComoImagen() {
-  const imagenesDeSimbolos = await Promise.all(elementosEnMapa.map(function (elemento) {
-    return buscarTipo(elemento.tipoId).forma === 'simbolo' ? cargarImagenDeSimbolo(elemento) : null;
-  }));
-
-  const escala = 2; // el doble de píxeles, para que se vea nítido
-  const canvas = document.createElement('canvas');
-  canvas.width = ANCHO_LIENZO * escala;
-  canvas.height = ALTO_LIENZO * escala;
-  const contexto = canvas.getContext('2d');
-  contexto.scale(escala, escala);
-
+// Dibuja el mapa (fondo, imagen base y elementos visibles) en un canvas,
+// en las mismas coordenadas del lienzo: de 0 a 898 de ancho y de 0 a 730 de alto.
+function dibujarMapaEnCanvas(contexto, imagenesDeElementos) {
   contexto.fillStyle = fondoDelMapa.color;
   contexto.fillRect(0, 0, ANCHO_LIENZO, ALTO_LIENZO);
 
@@ -1413,17 +2380,335 @@ async function exportarComoImagen() {
   contexto.restore();
 
   elementosEnMapa.forEach(function (elemento, indice) {
-    dibujarElementoEnCanvas(contexto, elemento, imagenesDeSimbolos[indice]);
+    if (!capaDelElemento(elemento).visible) {
+      return; // las capas ocultas no salen en la imagen
+    }
+    dibujarElementoEnCanvas(contexto, elemento, imagenesDeElementos[indice]);
+  });
+}
+
+function cargarImagenesDelMapa() {
+  return Promise.all(elementosEnMapa.map(function (elemento) {
+    return seDibujaConSvg(buscarTipo(elemento.tipoId)) ? cargarImagenDeElemento(elemento) : null;
+  }));
+}
+
+// --- Hoja de infografía: el mapa con su rótulo, norte, escala y leyenda ---
+
+// Tamaños de papel en milímetros, en horizontal
+const FORMATOS_HOJA = {
+  carta: { nombre: 'Carta', ancho: 279.4, alto: 215.9, tamanoPagina: 'letter landscape' },
+  a3: { nombre: 'A3', ancho: 420, alto: 297, tamanoPagina: 'A3 landscape' }
+};
+
+// Lee lo que la persona escribió en la ventana Exportar
+function leerDatosDeHoja() {
+  hojaConfig = {
+    formato: campoFormatoHoja.value,
+    calidad: Number(campoCalidadHoja.value),
+    titulo: campoTituloHoja.value.trim(),
+    autor: campoAutorHoja.value.trim(),
+    fecha: campoFechaHoja.value,
+    leyenda: campoLeyendaHoja.checked
+  };
+}
+
+function mostrarDatosDeHoja() {
+  campoFormatoHoja.value = hojaConfig.formato;
+  campoCalidadHoja.value = String(hojaConfig.calidad);
+  campoTituloHoja.value = hojaConfig.titulo || nombreDelMapa;
+  campoAutorHoja.value = hojaConfig.autor;
+  campoFechaHoja.value = hojaConfig.fecha || new Date().toISOString().slice(0, 10);
+  campoLeyendaHoja.checked = hojaConfig.leyenda;
+  document.getElementById('grupo-datos-hoja').hidden = hojaConfig.formato === 'mapa';
+}
+
+// Escala numérica de la hoja: cuántos milímetros reales caben en 1 mm de papel.
+// Se redondea a una escala de las que se usan en planos (1:500, 1:1.000, 1:2.500…).
+function calcularEscalaNumerica(milimetrosPorPixel) {
+  const exacta = planoConfig.metrosPorPixel * 1000 / milimetrosPorPixel;
+  const normales = [100, 200, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000, 15000, 20000, 25000, 50000];
+  let mejor = normales[0];
+  normales.forEach(function (valor) {
+    if (Math.abs(Math.log(valor / exacta)) < Math.abs(Math.log(mejor / exacta))) {
+      mejor = valor;
+    }
+  });
+  return { exacta: exacta, redondeada: mejor };
+}
+
+// Los tipos de elementos que aparecen en el mapa (en capas visibles), sin repetir,
+// en el orden del catálogo. Los textos, cotas y escalas no van en la leyenda.
+function tiposParaLeyenda() {
+  const usados = {};
+  elementosEnMapa.forEach(function (elemento) {
+    if (capaDelElemento(elemento).visible) {
+      usados[elemento.tipoId] = true;
+    }
+  });
+  return CATALOGO_ELEMENTOS.filter(function (tipo) {
+    return usados[tipo.id] && tipo.forma !== 'texto' && tipo.forma !== 'escala' && tipo.forma !== 'cota';
+  });
+}
+
+// Una muestra de cada tipo para la leyenda: vías y redes cortas, zonas pequeñas
+function crearMuestraDeLeyenda(tipo) {
+  const muestra = crearDatosElemento(tipo, 0, 0);
+  if (tipo.forma === 'linea') {
+    muestra.ancho = 90;
+    muestra.alto = Math.max(6, Math.min(tipo.alto, 22));
+  }
+  if (tipo.forma === 'zona') {
+    muestra.ancho = 90;
+    muestra.alto = 60;
+  }
+  if (tipo.forma === 'flecha') {
+    muestra.ancho = 90;
+    muestra.alto = 45;
+  }
+  // Si el mapa usa otro color para ese tipo, la leyenda muestra el primero que encuentre
+  const enMapa = elementosEnMapa.find(function (elemento) { return elemento.tipoId === tipo.id; });
+  if (enMapa) {
+    muestra.color = enMapa.color;
+    muestra.trama = enMapa.trama;
+  }
+  return muestra;
+}
+
+// Parte un texto en renglones que quepan en "anchoMaximo"
+function partirEnRenglones(contexto, texto, anchoMaximo) {
+  const palabras = texto.split(' ');
+  const renglones = [];
+  let renglon = '';
+  palabras.forEach(function (palabra) {
+    const prueba = renglon ? renglon + ' ' + palabra : palabra;
+    if (contexto.measureText(prueba).width > anchoMaximo && renglon) {
+      renglones.push(renglon);
+      renglon = palabra;
+    } else {
+      renglon = prueba;
+    }
+  });
+  renglones.push(renglon);
+  return renglones;
+}
+
+// Dibuja una imagen dentro de una caja sin deformarla (centrada)
+function dibujarImagenEnCaja(contexto, imagen, x, y, ancho, alto) {
+  const factor = Math.min(ancho / imagen.width, alto / imagen.height);
+  const anchoFinal = imagen.width * factor;
+  const altoFinal = imagen.height * factor;
+  contexto.drawImage(imagen, x + (ancho - anchoFinal) / 2, y + (alto - altoFinal) / 2, anchoFinal, altoFinal);
+}
+
+function textoEnHoja(contexto, texto, x, y, tamano, peso, color, alineacion) {
+  contexto.font = peso + ' ' + tamano + 'px ' + FUENTE_TEXTOS;
+  contexto.fillStyle = color;
+  contexto.textAlign = alineacion || 'left';
+  contexto.textBaseline = 'alphabetic';
+  contexto.fillText(texto, x, y);
+}
+
+// Escala gráfica dibujada en milímetros de papel
+function dibujarEscalaGraficaEnHoja(contexto, x, y, anchoDisponible, escala) {
+  // ¿Cuántos metros reales caben en el ancho disponible? Elegimos un número redondo.
+  const metrosDisponibles = anchoDisponible * escala / 1000;
+  const opciones = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  let metros = opciones[0];
+  opciones.forEach(function (valor) {
+    if (valor <= metrosDisponibles * 0.9) {
+      metros = valor;
+    }
+  });
+  const largo = metros * 1000 / escala;
+  for (let i = 0; i < 4; i++) {
+    contexto.fillStyle = i % 2 === 0 ? TRAZO : '#ffffff';
+    contexto.fillRect(x + i * largo / 4, y, largo / 4, 2.2);
+  }
+  contexto.lineWidth = 0.3;
+  contexto.strokeStyle = TRAZO;
+  contexto.strokeRect(x, y, largo, 2.2);
+  textoEnHoja(contexto, '0', x, y - 1.2, 2.6, 500, TRAZO, 'center');
+  textoEnHoja(contexto, String(metros / 2), x + largo / 2, y - 1.2, 2.6, 500, TRAZO, 'center');
+  textoEnHoja(contexto, formatearMetros(metros), x + largo, y - 1.2, 2.6, 500, TRAZO, 'center');
+}
+
+// Arma la hoja completa en un canvas. Se dibuja en milímetros y luego se
+// multiplica por los píxeles por milímetro de la calidad elegida (150 o 300 ppp).
+async function crearCanvasDeHoja() {
+  const formato = FORMATOS_HOJA[hojaConfig.formato];
+  const pixelesPorMm = hojaConfig.calidad / 25.4;
+  const tipos = hojaConfig.leyenda ? tiposParaLeyenda() : [];
+  const tipoNorte = buscarTipo('norte');
+
+  const imagenesDeElementos = await cargarImagenesDelMapa();
+  const imagenesDeLeyenda = await Promise.all(tipos.map(function (tipo) {
+    return cargarImagenDeElemento(crearMuestraDeLeyenda(tipo));
+  }));
+  const imagenNorte = await cargarImagenDeElemento(crearDatosElemento(tipoNorte, 0, 0));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(formato.ancho * pixelesPorMm);
+  canvas.height = Math.round(formato.alto * pixelesPorMm);
+  const contexto = canvas.getContext('2d');
+  contexto.scale(pixelesPorMm, pixelesPorMm);
+  contexto.fillStyle = '#ffffff';
+  contexto.fillRect(0, 0, formato.ancho, formato.alto);
+
+  // Medidas de la hoja (mm): margen, columna del rótulo a la derecha y área del mapa
+  const margen = 10;
+  const separacion = 5;
+  const anchoColumna = Math.round(formato.ancho * 0.24);
+  const xColumna = formato.ancho - margen - anchoColumna;
+  const anchoArea = xColumna - separacion - margen;
+  const altoArea = formato.alto - margen * 2;
+
+  // El mapa se ajusta al área sin deformarse
+  const milimetrosPorPixel = Math.min(anchoArea / ANCHO_LIENZO, altoArea / ALTO_LIENZO);
+  const anchoMapa = ANCHO_LIENZO * milimetrosPorPixel;
+  const altoMapa = ALTO_LIENZO * milimetrosPorPixel;
+  const xMapa = margen + (anchoArea - anchoMapa) / 2;
+  const yMapa = margen + (altoArea - altoMapa) / 2;
+  contexto.save();
+  contexto.beginPath();
+  contexto.rect(xMapa, yMapa, anchoMapa, altoMapa);
+  contexto.clip();
+  contexto.translate(xMapa, yMapa);
+  contexto.scale(milimetrosPorPixel, milimetrosPorPixel);
+  dibujarMapaEnCanvas(contexto, imagenesDeElementos);
+  contexto.restore();
+  contexto.lineWidth = 0.35;
+  contexto.strokeStyle = TRAZO;
+  contexto.strokeRect(xMapa, yMapa, anchoMapa, altoMapa);
+
+  // Marco de la columna
+  const yColumna = margen;
+  const altoColumna = formato.alto - margen * 2;
+  contexto.strokeRect(xColumna, yColumna, anchoColumna, altoColumna);
+  const relleno = 4;
+  const xTexto = xColumna + relleno;
+  const anchoTexto = anchoColumna - relleno * 2;
+
+  // Norte y escala, arriba
+  const escala = calcularEscalaNumerica(milimetrosPorPixel);
+  if (imagenNorte) {
+    dibujarImagenEnCaja(contexto, imagenNorte, xTexto, yColumna + relleno, 16, 16);
+  }
+  textoEnHoja(contexto, 'Escala 1:' + escala.redondeada.toLocaleString('es-CO'), xTexto + 20, yColumna + relleno + 6, 3.6, 700, TRAZO);
+  textoEnHoja(contexto, 'Aprox. en ' + formato.nombre + ' horizontal', xTexto + 20, yColumna + relleno + 10.5, 2.6, 500, '#6b7280');
+  dibujarEscalaGraficaEnHoja(contexto, xTexto + 1, yColumna + relleno + 22, anchoTexto - 6, escala.exacta);
+  let y = yColumna + relleno + 30;
+  contexto.beginPath();
+  contexto.moveTo(xColumna, y);
+  contexto.lineTo(xColumna + anchoColumna, y);
+  contexto.stroke();
+
+  // Rótulo (cajetín), abajo: título, autor y fecha
+  const altoRotulo = 46;
+  const yRotulo = yColumna + altoColumna - altoRotulo;
+  contexto.beginPath();
+  contexto.moveTo(xColumna, yRotulo);
+  contexto.lineTo(xColumna + anchoColumna, yRotulo);
+  contexto.stroke();
+  contexto.font = '800 6px ' + FUENTE_TEXTOS;
+  const renglonesTitulo = partirEnRenglones(contexto, hojaConfig.titulo || nombreDelMapa, anchoTexto).slice(0, 3);
+  let yTitulo = yRotulo + relleno + 5.5;
+  renglonesTitulo.forEach(function (renglon) {
+    textoEnHoja(contexto, renglon, xTexto, yTitulo, 6, 800, TRAZO);
+    yTitulo += 7;
+  });
+  const fechaTexto = hojaConfig.fecha
+    ? new Date(hojaConfig.fecha + 'T12:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const filas = [['Autor', hojaConfig.autor || '—'], ['Fecha', fechaTexto || '—']];
+  let yFila = yRotulo + altoRotulo - relleno - (filas.length - 1) * 7;
+  filas.forEach(function (fila) {
+    textoEnHoja(contexto, fila[0].toUpperCase(), xTexto, yFila - 3.4, 2.2, 600, '#6b7280');
+    textoEnHoja(contexto, fila[1], xTexto, yFila, 3.2, 600, TRAZO);
+    yFila += 7;
   });
 
-  descargarArchivo(nombreDelMapa + '.png', canvas.toDataURL('image/png'));
+  // Leyenda en el espacio del medio. Si no cabe en una columna, usa dos y letra más pequeña.
+  if (tipos.length > 0) {
+    y += 7;
+    textoEnHoja(contexto, 'LEYENDA', xTexto, y, 3.4, 800, TRAZO);
+    y += 3;
+    const espacio = yRotulo - y - 3;
+    let columnas = 1;
+    let altoFila = 8;
+    if (tipos.length * altoFila > espacio) {
+      columnas = 2;
+      altoFila = Math.min(8, espacio / Math.ceil(tipos.length / 2));
+    }
+    const porColumna = Math.ceil(tipos.length / columnas);
+    const anchoCelda = anchoTexto / columnas;
+    const tamanoLetra = Math.min(2.8, altoFila * 0.38);
+    tipos.forEach(function (tipo, indice) {
+      const columna = Math.floor(indice / porColumna);
+      const fila = indice % porColumna;
+      const xCelda = xTexto + columna * anchoCelda;
+      const yCelda = y + fila * altoFila;
+      if (imagenesDeLeyenda[indice]) {
+        dibujarImagenEnCaja(contexto, imagenesDeLeyenda[indice], xCelda, yCelda + altoFila * 0.12, altoFila * 1.25, altoFila * 0.76);
+      }
+      // El nombre ocupa hasta dos renglones; si es más largo, se corta con "…"
+      contexto.font = '500 ' + tamanoLetra + 'px ' + FUENTE_TEXTOS;
+      const renglones = partirEnRenglones(contexto, tipo.nombre, anchoCelda - altoFila * 1.55);
+      const visibles = renglones.slice(0, 2);
+      if (renglones.length > 2) {
+        visibles[1] = visibles[1] + '…';
+      }
+      const altoRenglon = tamanoLetra * 1.15;
+      const primerRenglon = yCelda + altoFila * 0.5 + tamanoLetra * 0.35 - (visibles.length - 1) * altoRenglon / 2;
+      visibles.forEach(function (renglon, numero) {
+        textoEnHoja(contexto, renglon, xCelda + altoFila * 1.45, primerRenglon + numero * altoRenglon, tamanoLetra, 500, TRAZO);
+      });
+    });
+  }
+  return canvas;
+}
+
+async function crearCanvasDelMapaSolo() {
+  const imagenesDeElementos = await cargarImagenesDelMapa();
+  const escala = hojaConfig.calidad >= 300 ? 4 : 2; // más píxeles, más nítido
+  const canvas = document.createElement('canvas');
+  canvas.width = ANCHO_LIENZO * escala;
+  canvas.height = ALTO_LIENZO * escala;
+  const contexto = canvas.getContext('2d');
+  contexto.scale(escala, escala);
+  dibujarMapaEnCanvas(contexto, imagenesDeElementos);
+  return canvas;
+}
+
+// Descarga el PNG: solo el mapa o la hoja completa, según el formato elegido
+async function exportarComoImagen() {
+  leerDatosDeHoja();
+  mostrarAviso('Preparando la imagen…');
+  const canvas = hojaConfig.formato === 'mapa' ? await crearCanvasDelMapaSolo() : await crearCanvasDeHoja();
+  const sufijo = hojaConfig.formato === 'mapa' ? '' : ' - ' + FORMATOS_HOJA[hojaConfig.formato].nombre;
+  descargarArchivo(nombreDelMapa + sufijo + '.png', canvas.toDataURL('image/png'));
   mostrarAviso('Imagen descargada');
 }
 
-function imprimirMapa() {
+// Imprime el mapa tal como se ve, o la hoja completa en su tamaño de papel.
+// Para guardar como PDF, elige "Guardar como PDF" en la ventana de impresión.
+async function imprimirMapa() {
+  leerDatosDeHoja();
   dialogoExportar.close();
   seleccionarElemento(null);
+  if (hojaConfig.formato === 'mapa') {
+    window.print();
+    return;
+  }
+  mostrarAviso('Preparando la hoja…');
+  const canvas = await crearCanvasDeHoja();
+  hojaParaImprimir.src = canvas.toDataURL('image/png');
+  await hojaParaImprimir.decode();
+  estiloPagina.textContent = '@page { size: ' + FORMATOS_HOJA[hojaConfig.formato].tamanoPagina + '; margin: 0; }';
+  document.body.classList.add('imprimiendo-hoja');
   window.print();
+  document.body.classList.remove('imprimiendo-hoja');
+  estiloPagina.textContent = '';
 }
 
 function descargarArchivoDelMapa() {
@@ -1501,7 +2786,68 @@ function conectarEventos() {
     aplicarFondo();
   });
 
+  // Dibujar vías, redes y zonas a mano
+  document.getElementById('boton-dibujar').addEventListener('click', empezarHerramientaDibujar);
+  document.getElementById('boton-terminar-dibujo').addEventListener('click', terminarDibujo);
+  document.getElementById('boton-deshacer-punto').addEventListener('click', quitarUltimoPunto);
+  document.getElementById('boton-cancelar-dibujo').addEventListener('click', cancelarDibujo);
+  contenedorLienzo.addEventListener('dblclick', function () {
+    if (herramienta === 'dibujar') {
+      terminarDibujo();
+    }
+  });
+  campoSuavizar.addEventListener('change', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.suavizar = campoSuavizar.checked; });
+  });
+  campoTrama.addEventListener('change', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.trama = campoTrama.value; });
+  });
+  campoGrosor.addEventListener('input', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.grosor = Number(campoGrosor.value); });
+  });
+
+  // Capas
+  document.getElementById('boton-mostrar-capas').addEventListener('click', mostrarTodasLasCapas);
+
+  // Escala, cuadrícula e imán
+  campoMetrosPixel.addEventListener('change', function () {
+    const valor = Number(campoMetrosPixel.value);
+    if (valor > 0) {
+      planoConfig.metrosPorPixel = valor;
+      dibujarMapa();
+    }
+    aplicarPlano();
+  });
+  campoMostrarCuadricula.addEventListener('change', function () {
+    planoConfig.cuadriculaVisible = campoMostrarCuadricula.checked;
+    aplicarPlano();
+  });
+  campoTamanoCuadricula.addEventListener('change', function () {
+    planoConfig.tamanoCuadricula = Number(campoTamanoCuadricula.value);
+    aplicarPlano();
+  });
+  campoIman.addEventListener('change', function () {
+    planoConfig.imanActivo = campoIman.checked;
+    aplicarPlano();
+  });
+  document.getElementById('boton-cuadricula').addEventListener('click', function () {
+    planoConfig.cuadriculaVisible = !planoConfig.cuadriculaVisible;
+    aplicarPlano();
+  });
+  document.getElementById('boton-iman').addEventListener('click', function () {
+    planoConfig.imanActivo = !planoConfig.imanActivo;
+    aplicarPlano();
+    mostrarAviso(planoConfig.imanActivo ? 'Imán activado: los elementos se alinean a la cuadrícula' : 'Imán desactivado');
+  });
+  document.querySelectorAll('[data-herramienta]').forEach(function (boton) {
+    boton.addEventListener('click', function () { cambiarHerramienta(boton.dataset.herramienta); });
+  });
+
   // Propiedades del elemento seleccionado
+  campoMostrarArea.addEventListener('change', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.mostrarArea = campoMostrarArea.checked; });
+  });
+  document.getElementById('boton-calibrar').addEventListener('click', calibrarConCota);
   campoTexto.addEventListener('input', function () {
     cambiarElementoSeleccionado(function (elemento) { elemento.texto = campoTexto.value; });
   });
@@ -1537,9 +2883,54 @@ function conectarEventos() {
   document.getElementById('boton-eliminar').addEventListener('click', eliminarElemento);
   document.getElementById('boton-listo').addEventListener('click', function () { seleccionarElemento(null); });
 
-  // Teclado: Suprimir quita el elemento; R gira 15° (Mayúsculas + R, al otro lado)
+  // Editar varios a la vez, alinear, copiar y deshacer
+  document.getElementById('boton-deshacer').addEventListener('click', deshacer);
+  document.getElementById('boton-rehacer').addEventListener('click', rehacer);
+  document.getElementById('boton-varios').addEventListener('click', cambiarModoVarios);
+  document.querySelectorAll('[data-alinear]').forEach(function (boton) {
+    boton.addEventListener('click', function () { alinearSeleccion(boton.dataset.alinear); });
+  });
+  document.querySelectorAll('[data-distribuir]').forEach(function (boton) {
+    boton.addEventListener('click', function () { repartirSeleccion(boton.dataset.distribuir); });
+  });
+
+  // Teclado:
+  //   Ctrl + Z deshace, Ctrl + Y (o Ctrl + Mayúsculas + Z) rehace
+  //   Ctrl + C copia y Ctrl + V pega
+  //   Flechas mueven lo elegido (con Mayúsculas, más lejos)
+  //   Suprimir quita lo elegido; R gira 15° (Mayúsculas + R, al otro lado)
   document.addEventListener('keydown', function (evento) {
-    const escribiendo = evento.target.tagName === 'INPUT';
+    const escribiendo = ['INPUT', 'SELECT', 'TEXTAREA'].indexOf(evento.target.tagName) !== -1;
+    if (evento.key === 'Escape') {
+      cambiarHerramienta('seleccionar');
+    }
+    const conControl = evento.ctrlKey || evento.metaKey;  // metaKey es la tecla Cmd del Mac
+    const tecla = evento.key.toLowerCase();
+    if (conControl && !escribiendo && herramienta !== 'dibujar') {
+      if (tecla === 'z' && !evento.shiftKey) {
+        evento.preventDefault();
+        deshacer();
+      } else if (tecla === 'y' || (tecla === 'z' && evento.shiftKey)) {
+        evento.preventDefault();
+        rehacer();
+      } else if (tecla === 'c') {
+        copiarSeleccion();
+      } else if (tecla === 'v') {
+        evento.preventDefault();
+        pegarCopia();
+      }
+      return;
+    }
+    if (herramienta === 'dibujar' && !escribiendo) {
+      if (evento.key === 'Enter') {
+        terminarDibujo();
+      }
+      if (evento.key === 'Backspace') {
+        evento.preventDefault();
+        quitarUltimoPunto();
+      }
+      return;
+    }
     if (!idSeleccionado || escribiendo) {
       return;
     }
@@ -1549,12 +2940,24 @@ function conectarEventos() {
     if (evento.key === 'r' || evento.key === 'R') {
       girarPorBotones(evento.shiftKey ? -15 : 15, false);
     }
+    const flechas = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (flechas[evento.key]) {
+      evento.preventDefault();
+      empujarSeleccion(flechas[evento.key][0], flechas[evento.key][1], evento.shiftKey);
+    }
   });
 
   // Barra superior
   document.getElementById('boton-nuevo').addEventListener('click', empezarMapaNuevo);
   document.getElementById('boton-mis-mapas').addEventListener('click', abrirDialogoMapas);
-  document.getElementById('boton-exportar').addEventListener('click', function () { dialogoExportar.showModal(); });
+  document.getElementById('boton-exportar').addEventListener('click', function () {
+    mostrarDatosDeHoja();
+    dialogoExportar.showModal();
+  });
+  campoFormatoHoja.addEventListener('change', function () {
+    leerDatosDeHoja();
+    mostrarDatosDeHoja();
+  });
   document.getElementById('boton-vista-limpia').addEventListener('click', function () { cambiarVistaLimpia(true); });
   document.getElementById('boton-salir-vista-limpia').addEventListener('click', function () { cambiarVistaLimpia(false); });
 
@@ -1581,11 +2984,19 @@ function conectarEventos() {
 function iniciarAplicacion() {
   document.getElementById('aviso-falta-app').remove();
   imagenMapa.src = IMAGEN_MAPA_SILOE;
+  llenarTiposDeTrazo();
+  Object.keys(TRAMAS).forEach(function (clave) {
+    campoTrama.appendChild(new Option(TRAMAS[clave], clave));
+  });
   mostrarCategorias();
   mostrarGaleria();
   aplicarFondo();
+  aplicarPlano();
+  cambiarHerramienta('seleccionar');
   dibujarMapa();
+  mostrarCapas();
   mostrarPropiedades();
+  empezarHistorialNuevo();
   conectarEventos();
   ajustarZoomALaPantalla();
 }
