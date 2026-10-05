@@ -787,6 +787,27 @@ body.vista-limpia .boton-salir-vista-limpia {
     padding: 56px 12px 12px;
   }
 
+  /* En el móvil la barra de herramientas es una sola fila que se desliza de lado */
+  .barra-herramientas {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: auto;
+  }
+
+  .herramienta,
+  .casilla-herramienta {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .selector-trazo {
+    flex-shrink: 0;
+  }
+
+  .barra-dibujo {
+    bottom: 12px;
+  }
+
   .panel {
     height: 40vh;
     border: none;

@@ -38,6 +38,8 @@ const CATEGORIAS = [
   { id: 'comercio', nombre: 'Viviendas y comunidad' },
   { id: 'infraestructura', nombre: 'Infraestructura' },
   { id: 'caminos', nombre: 'Caminos y redes' },
+  { id: 'topografia', nombre: 'Topografía' },
+  { id: 'mobiliario', nombre: 'Mobiliario urbano' },
   { id: 'zonas', nombre: 'Zonas y secciones' },
   { id: 'anotacion', nombre: 'Textos y flechas' }
 ];
@@ -51,6 +53,8 @@ const CAPAS = [
   { id: 'electrica', nombre: 'Red eléctrica' },
   { id: 'agua', nombre: 'Agua y alcantarillado' },
   { id: 'vias', nombre: 'Vías y caminos' },
+  { id: 'topografia', nombre: 'Topografía' },
+  { id: 'mobiliario', nombre: 'Mobiliario urbano' },
   { id: 'zonas', nombre: 'Zonas y secciones' },
   { id: 'anotaciones', nombre: 'Textos, cotas y flechas' }
 ];
@@ -61,6 +65,8 @@ const CAPAS = [
 //   'linea'   → una franja larga: calles, cables, tuberías, quebradas…
 //   'texto'   → un texto que escribes tú
 //   'flecha'  → una flecha que puedes girar
+// Las líneas pueden tener un "estiloLinea": 'sendero' (a trazos), 'escalera' (con peldaños)
+// o 'muro' (muro de contención). Las zonas pueden traer una "trama": 'diagonal', 'cruzada' o 'puntos'.
 const CATALOGO_ELEMENTOS = [
   // --- Naturaleza ---
   { id: 'arbol', capa: 'vegetacion', nombre: 'Árbol', categoria: 'naturaleza', forma: 'simbolo', simbolo: 'arbol', color: '#8fbf7f', tamano: 56 },
@@ -89,6 +95,9 @@ const CATALOGO_ELEMENTOS = [
   { id: 'parque-infantil', capa: 'equipamientos', nombre: 'Parque infantil', categoria: 'comercio', forma: 'simbolo', simbolo: 'parqueInfantil', color: '#e3a33b', tamano: 40 },
   { id: 'teleferico', capa: 'equipamientos', nombre: 'Estación de cable', categoria: 'comercio', forma: 'simbolo', simbolo: 'teleferico', color: '#2f6f8f', tamano: 40 },
   { id: 'parada-bus', capa: 'equipamientos', nombre: 'Parada de bus', categoria: 'comercio', forma: 'simbolo', simbolo: 'paradaBus', color: '#2e8b57', tamano: 36 },
+  { id: 'cai', capa: 'equipamientos', nombre: 'CAI (Policía)', categoria: 'comercio', forma: 'simbolo', simbolo: 'cai', color: '#1f4e79', tamano: 40 },
+  { id: 'biblioteca', capa: 'equipamientos', nombre: 'Biblioteca', categoria: 'comercio', forma: 'simbolo', simbolo: 'biblioteca', color: '#8e5b3e', tamano: 40 },
+  { id: 'salon-comunal', capa: 'equipamientos', nombre: 'Salón comunal', categoria: 'comercio', forma: 'simbolo', simbolo: 'salonComunal', color: '#c26a3d', tamano: 40 },
 
   // --- Infraestructura ---
   { id: 'poste', capa: 'electrica', nombre: 'Poste eléctrico', categoria: 'infraestructura', forma: 'simbolo', simbolo: 'poste', color: '#e0a800', tamano: 22 },
@@ -109,12 +118,28 @@ const CATALOGO_ELEMENTOS = [
   { id: 'tuberia-agua', capa: 'agua', nombre: 'Tubería de agua', categoria: 'caminos', forma: 'linea', color: '#3b82c4', colorCentro: '#bcd7ef', ancho: 240, alto: 10 },
   { id: 'quebrada', capa: 'agua', nombre: 'Quebrada / río', categoria: 'caminos', forma: 'linea', color: '#7fb8d9', colorCentro: null, ancho: 260, alto: 16 },
   { id: 'alcantarillado', capa: 'agua', nombre: 'Alcantarillado', categoria: 'caminos', forma: 'linea', color: '#7a5233', colorCentro: '#d6b48c', ancho: 240, alto: 10 },
+  { id: 'sendero', capa: 'vias', nombre: 'Sendero / trocha', categoria: 'caminos', forma: 'linea', estiloLinea: 'sendero', color: '#a0784f', colorCentro: null, ancho: 180, alto: 5 },
+  { id: 'escalera', capa: 'vias', nombre: 'Escaleras', categoria: 'caminos', forma: 'linea', estiloLinea: 'escalera', color: '#e2d6c2', colorCentro: null, ancho: 120, alto: 18 },
+
+  // --- Topografía ---
+  { id: 'curva-nivel', capa: 'topografia', nombre: 'Curva de nivel', categoria: 'topografia', forma: 'linea', color: '#b07a4f', colorCentro: null, ancho: 260, alto: 2 },
+  { id: 'curva-indice', capa: 'topografia', nombre: 'Curva de nivel índice', categoria: 'topografia', forma: 'linea', color: '#8a5530', colorCentro: null, ancho: 260, alto: 4 },
+  { id: 'muro-contencion', capa: 'topografia', nombre: 'Muro de contención', categoria: 'topografia', forma: 'linea', estiloLinea: 'muro', color: '#5f6366', colorCentro: null, ancho: 160, alto: 14 },
+  { id: 'pendiente', capa: 'topografia', nombre: 'Pendiente (bajada)', categoria: 'topografia', forma: 'simbolo', simbolo: 'pendiente', color: '#8a5530', tamano: 50 },
+  { id: 'talud', capa: 'topografia', nombre: 'Talud', categoria: 'topografia', forma: 'zona', figura: 'rectangulo', color: '#b07a4f', trama: 'diagonal', ancho: 160, alto: 60 },
+
+  // --- Mobiliario urbano ---
+  { id: 'banca', capa: 'mobiliario', nombre: 'Banca', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'banca', color: '#b98a5a', tamano: 30 },
+  { id: 'caneca', capa: 'mobiliario', nombre: 'Caneca de basura', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'caneca', color: '#4f9d69', tamano: 20 },
+  { id: 'paradero-mio', capa: 'mobiliario', nombre: 'Paradero MIO', categoria: 'mobiliario', forma: 'simbolo', simbolo: 'paraderoMio', color: '#0f6db3', tamano: 36 },
 
   // --- Zonas y secciones de color ---
   { id: 'zona-residencial', capa: 'zonas', nombre: 'Zona residencial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#e3a76f', ancho: 200, alto: 140 },
   { id: 'zona-comercial', capa: 'zonas', nombre: 'Zona comercial', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#9b8ec4', ancho: 200, alto: 140 },
   { id: 'zona-verde', capa: 'zonas', nombre: 'Zona verde', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#7fb069', ancho: 180, alto: 130 },
   { id: 'zona-riesgo', capa: 'zonas', nombre: 'Zona de riesgo', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#d9534f', ancho: 180, alto: 130 },
+  { id: 'amenaza-deslizamiento', capa: 'zonas', nombre: 'Deslizamiento (amenaza)', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#b5562a', trama: 'diagonal', ancho: 180, alto: 130 },
+  { id: 'amenaza-inundacion', capa: 'zonas', nombre: 'Inundación (amenaza)', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#2f7fc1', trama: 'puntos', ancho: 180, alto: 130 },
   { id: 'seccion-rectangular', capa: 'zonas', nombre: 'Sección rectangular', categoria: 'zonas', forma: 'zona', figura: 'rectangulo', color: '#6c9bd2', ancho: 200, alto: 140 },
   { id: 'seccion-circular', capa: 'zonas', nombre: 'Sección circular', categoria: 'zonas', forma: 'zona', figura: 'elipse', color: '#5bb5a2', ancho: 160, alto: 160 },
 
@@ -437,6 +462,47 @@ const SIMBOLOS = {
     return '<path d="M50 94 C50 94 18 58 18 38 A32 32 0 0 1 82 38 C82 58 50 94 50 94 Z" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<circle cx="50" cy="38" r="12" fill="#ffffff"/>';
   },
+  cai: function (color) {
+    return insignia(color, '<path d="M50 22 L72 30 L72 50 C72 64 62 74 50 80 C38 74 28 64 28 50 L28 30 Z" fill="#ffffff"/>' +
+      '<polygon points="50,38 54,47 63,47 56,53 59,62 50,56 41,62 44,53 37,47 46,47" fill="' + color + '"/>');
+  },
+  biblioteca: function (color) {
+    return insignia(color, '<rect x="26" y="28" width="11" height="44" rx="1.5" fill="#ffffff"/>' +
+      '<rect x="40" y="24" width="11" height="48" rx="1.5" fill="#ffffff"/>' +
+      '<rect x="55" y="29" width="11" height="44" rx="1.5" fill="#ffffff" transform="rotate(14 60 51)"/>' +
+      '<path d="M24 76 L76 76" ' + BLANCO + '/>');
+  },
+  salonComunal: function (color) {
+    return insignia(color, '<circle cx="50" cy="34" r="8" fill="#ffffff"/><circle cx="31" cy="42" r="6.5" fill="#ffffff"/><circle cx="69" cy="42" r="6.5" fill="#ffffff"/>' +
+      '<path d="M36 72 C36 54 64 54 64 72 Z" fill="#ffffff"/>' +
+      '<path d="M20 72 C20 58 38 56 40 62 M80 72 C80 58 62 56 60 62" ' + BLANCO + '/>');
+  },
+  pendiente: function (color) {
+    // Flecha que apunta hacia donde baja el terreno, con el rayado de un talud a los lados
+    let rayas = '';
+    for (let i = 0; i < 5; i++) {
+      const y = 20 + i * 15;
+      rayas += '<line x1="12" y1="' + y + '" x2="' + (i % 2 === 0 ? 26 : 20) + '" y2="' + y + '"/>' +
+        '<line x1="88" y1="' + y + '" x2="' + (i % 2 === 0 ? 74 : 80) + '" y2="' + y + '"/>';
+    }
+    return '<g stroke="' + color + '" stroke-width="2.5" stroke-linecap="round">' + rayas + '<line x1="12" y1="12" x2="12" y2="88"/><line x1="88" y1="12" x2="88" y2="88"/></g>' +
+      '<path d="M50 12 L50 70" stroke="' + color + '" stroke-width="7" stroke-linecap="round"/>' +
+      '<polygon points="34,64 66,64 50,92" fill="' + color + '"/>';
+  },
+  banca: function (color) {
+    return '<rect x="8" y="30" width="84" height="40" rx="3" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5"/>' +
+      '<path d="M8 43 L92 43 M8 57 L92 57" stroke="' + TRAZO + '" stroke-width="1.5" stroke-opacity="0.6"/>' +
+      '<rect x="14" y="24" width="8" height="52" rx="2" fill="' + TRAZO + '"/><rect x="78" y="24" width="8" height="52" rx="2" fill="' + TRAZO + '"/>';
+  },
+  caneca: function (color) {
+    return '<circle cx="50" cy="50" r="42" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="5"/>' +
+      '<circle cx="50" cy="50" r="24" fill="#ffffff" fill-opacity="0.55" stroke="' + TRAZO + '" stroke-width="3"/>';
+  },
+  paraderoMio: function (color) {
+    return '<rect x="6" y="18" width="88" height="64" rx="14" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="2.5"/>' +
+      '<rect x="12" y="24" width="76" height="52" rx="10" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.8"/>' +
+      '<text x="50" y="61" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#ffffff">MIO</text>';
+  },
   advertencia: function (color) {
     return '<polygon points="50,10 93,86 7,86" fill="' + color + '" stroke="' + TRAZO + '" stroke-width="3" stroke-linejoin="round"/>' +
       '<rect x="45.5" y="36" width="9" height="28" rx="3" fill="' + TRAZO + '"/><circle cx="50" cy="74" r="5" fill="' + TRAZO + '"/>';
@@ -501,6 +567,7 @@ const campoTipoTrazo = document.getElementById('campo-tipo-trazo');
 const campoSuavizarDibujo = document.getElementById('campo-suavizar-dibujo');
 const campoSuavizar = document.getElementById('campo-suavizar');
 const campoGrosor = document.getElementById('campo-grosor');
+const campoTrama = document.getElementById('campo-trama');
 const campoFormatoHoja = document.getElementById('campo-formato-hoja');
 const campoCalidadHoja = document.getElementById('campo-calidad-hoja');
 const campoTituloHoja = document.getElementById('campo-titulo-hoja');
@@ -610,7 +677,8 @@ function crearDatosElemento(tipo, x, y) {
     opacidad: 100,
     color: tipo.color || '#000000',
     texto: tipo.textoInicial || '',
-    mostrarArea: false
+    mostrarArea: false,
+    trama: tipo.trama || 'ninguna'
   };
 }
 
@@ -752,6 +820,77 @@ function textoConContorno(x, y, texto, tamano, color) {
 
 // Cada forma devuelve cuánto mide en pantalla y el dibujo SVG que va adentro.
 // Así el mismo dibujo sirve para la página, las miniaturas y la imagen PNG.
+// --- Tramas (rayados) para zonas: se hacen con un <pattern> de SVG ---
+// Cada trama necesita un id único en la página, por eso llevamos la cuenta.
+let contadorDeTramas = 0;
+
+const TRAMAS = {
+  ninguna: 'Sin trama',
+  diagonal: 'Rayado diagonal',
+  cruzada: 'Rayado cruzado',
+  puntos: 'Puntos'
+};
+
+// Devuelve { defs, relleno }: la definición del patrón y el "fill" que lo usa
+function crearTrama(trama, color) {
+  if (!trama || trama === 'ninguna') {
+    return null;
+  }
+  contadorDeTramas = contadorDeTramas + 1;
+  const id = 'trama-' + contadorDeTramas;
+  const linea = ' stroke="' + color + '" stroke-width="1.4" stroke-linecap="square"';
+  let dibujo = '';
+  if (trama === 'diagonal' || trama === 'cruzada') {
+    dibujo += '<path d="M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8"' + linea + '/>';
+  }
+  if (trama === 'cruzada') {
+    dibujo += '<path d="M-2 8 L2 12 M0 0 L10 10 M8 -2 L12 2"' + linea + '/>';
+  }
+  if (trama === 'puntos') {
+    dibujo += '<circle cx="2.5" cy="2.5" r="1.4" fill="' + color + '"/><circle cx="7.5" cy="7.5" r="1.4" fill="' + color + '"/>';
+  }
+  return {
+    defs: '<defs><pattern id="' + id + '" patternUnits="userSpaceOnUse" width="10" height="10">' + dibujo + '</pattern></defs>',
+    relleno: 'url(#' + id + ')'
+  };
+}
+
+// Pinta una figura de zona (sin atributos de color) con su relleno, su borde y su trama
+function pintarZona(figura, elemento) {
+  let contenido = figura + ' fill="' + colorTransparente(elemento.color, 0.45) + '" stroke="' + elemento.color + '" stroke-width="3" stroke-linejoin="round"/>';
+  const trama = crearTrama(elemento.trama, elemento.color);
+  if (trama) {
+    contenido = trama.defs + contenido + figura + ' fill="' + trama.relleno + '" stroke="none"/>';
+  }
+  return contenido;
+}
+
+// Pinta el trazo de una línea (recta o dibujada a mano) según su estilo.
+// "d" es el camino SVG por el centro de la línea.
+function pintarLinea(d, grosor, color, tipo) {
+  const camino = '<path d="' + d + '" fill="none" stroke-linejoin="round" ';
+  if (tipo.estiloLinea === 'sendero') {
+    return camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-dasharray="' + grosor * 2 + ' ' + grosor * 1.3 + '"/>';
+  }
+  if (tipo.estiloLinea === 'escalera') {
+    // La franja clara con rayas atravesadas (los peldaños)
+    return camino + 'stroke="' + TRAZO + '" stroke-width="' + (grosor + 2) + '"/>' +
+      camino + 'stroke="' + color + '" stroke-width="' + grosor + '"/>' +
+      camino + 'stroke="' + TRAZO + '" stroke-width="' + grosor + '" stroke-dasharray="1.5 ' + Math.max(4, grosor * 0.35) + '"/>';
+  }
+  if (tipo.estiloLinea === 'muro') {
+    // Una línea gruesa con rayitas cortas: así se dibuja un muro de contención
+    return camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-dasharray="2 5"/>' +
+      camino + 'stroke="' + color + '" stroke-width="' + Math.max(2, grosor * 0.4) + '"/>';
+  }
+  let contenido = camino + 'stroke="' + color + '" stroke-width="' + grosor + '" stroke-linecap="round"/>';
+  if (tipo.colorCentro) {
+    const raya = medidasRayaCentral(grosor);
+    contenido += camino + 'stroke="' + tipo.colorCentro + '" stroke-width="' + raya.grosor + '" stroke-dasharray="' + raya.tramo + ' ' + raya.tramo + '"/>';
+  }
+  return contenido;
+}
+
 const DIBUJOS = {
   simbolo: function (elemento, tipo) {
     return {
@@ -764,10 +903,10 @@ const DIBUJOS = {
   zona: function (elemento, tipo) {
     const ancho = elemento.ancho;
     const alto = elemento.alto;
-    const pintura = ' fill="' + colorTransparente(elemento.color, 0.45) + '" stroke="' + elemento.color + '" stroke-width="3"/>';
-    let contenido = tipo.figura === 'elipse'
-      ? '<ellipse cx="' + ancho / 2 + '" cy="' + alto / 2 + '" rx="' + (ancho / 2 - 1.5) + '" ry="' + (alto / 2 - 1.5) + '"' + pintura
-      : '<rect x="1.5" y="1.5" width="' + (ancho - 3) + '" height="' + (alto - 3) + '" rx="9"' + pintura;
+    const figura = tipo.figura === 'elipse'
+      ? '<ellipse cx="' + ancho / 2 + '" cy="' + alto / 2 + '" rx="' + (ancho / 2 - 1.5) + '" ry="' + (alto / 2 - 1.5) + '"'
+      : '<rect x="1.5" y="1.5" width="' + (ancho - 3) + '" height="' + (alto - 3) + '" rx="9"';
+    let contenido = pintarZona(figura, elemento);
     if (elemento.mostrarArea) {
       contenido += textoConContorno(ancho / 2, alto / 2 + 4, formatearArea(calcularArea(elemento)), 12, TRAZO);
     }
@@ -777,13 +916,10 @@ const DIBUJOS = {
   linea: function (elemento, tipo) {
     const ancho = elemento.ancho;
     const alto = elemento.alto;
-    let contenido = '<rect width="' + ancho + '" height="' + alto + '" rx="' + alto / 2 + '" fill="' + elemento.color + '"/>';
-    if (tipo.colorCentro) {
-      const raya = medidasRayaCentral(alto);
-      contenido += '<line x1="' + alto / 2 + '" y1="' + alto / 2 + '" x2="' + (ancho - alto / 2) + '" y2="' + alto / 2 +
-        '" stroke="' + tipo.colorCentro + '" stroke-width="' + raya.grosor + '" stroke-dasharray="' + raya.tramo + ' ' + raya.tramo + '"/>';
-    }
-    return { ancho: ancho, alto: alto, contenido: contenido };
+    // Las líneas con punta redonda empiezan media línea adentro; las demás van de borde a borde
+    const adentro = tipo.estiloLinea ? 0 : alto / 2;
+    const d = 'M' + adentro + ' ' + alto / 2 + ' L' + (ancho - adentro) + ' ' + alto / 2;
+    return { ancho: ancho, alto: alto, contenido: pintarLinea(d, alto, elemento.color, tipo) };
   },
 
   flecha: function (elemento, tipo) {
@@ -855,14 +991,7 @@ function correrPuntosALaCaja(elemento, cerrado, margen) {
 DIBUJOS.trazo = function (elemento, tipo) {
   const caja = correrPuntosALaCaja(elemento, false, elemento.grosor);
   const d = crearCaminoSvg(caja.puntos, false, elemento.suavizar);
-  let contenido = '<path d="' + d + '" fill="none" stroke="' + elemento.color + '" stroke-width="' + elemento.grosor +
-    '" stroke-linecap="round" stroke-linejoin="round"/>';
-  if (tipo.colorCentro) {
-    const raya = medidasRayaCentral(elemento.grosor);
-    contenido += '<path d="' + d + '" fill="none" stroke="' + tipo.colorCentro + '" stroke-width="' + raya.grosor +
-      '" stroke-dasharray="' + raya.tramo + ' ' + raya.tramo + '"/>';
-  }
-  return { ancho: caja.ancho, alto: caja.alto, contenido: contenido };
+  return { ancho: caja.ancho, alto: caja.alto, contenido: pintarLinea(d, elemento.grosor, elemento.color, tipo) };
 };
 
 // Zonas con forma libre (polígono), con la misma pintura que las zonas rectangulares
@@ -870,8 +999,7 @@ DIBUJOS.poligono = function (elemento) {
   const caja = correrPuntosALaCaja(elemento, true, 3);
   const ancho = caja.ancho;
   const alto = caja.alto;
-  let contenido = '<path d="' + crearCaminoSvg(caja.puntos, true, elemento.suavizar) + '" fill="' + colorTransparente(elemento.color, 0.45) +
-    '" stroke="' + elemento.color + '" stroke-width="3" stroke-linejoin="round"/>';
+  let contenido = pintarZona('<path d="' + crearCaminoSvg(caja.puntos, true, elemento.suavizar) + '"', elemento);
   if (elemento.mostrarArea) {
     contenido += textoConContorno(ancho / 2, alto / 2 + 4, formatearArea(calcularArea(elemento)), 12, TRAZO);
   }
@@ -1695,6 +1823,8 @@ function mostrarPropiedades() {
   document.getElementById('grupo-ancho').hidden = tamanoUnico || libre;
   document.getElementById('grupo-alto').hidden = tamanoUnico || libre || forma === 'cota';
   document.getElementById('grupo-area').hidden = forma !== 'zona' && forma !== 'poligono';
+  document.getElementById('grupo-trama').hidden = forma !== 'zona' && forma !== 'poligono';
+  campoTrama.value = elemento.trama || 'ninguna';
   document.getElementById('grupo-medida').hidden = forma !== 'cota';
   document.getElementById('grupo-trazo').hidden = !libre;
   document.getElementById('grupo-grosor').hidden = forma !== 'trazo';
@@ -2340,6 +2470,7 @@ function crearMuestraDeLeyenda(tipo) {
   const enMapa = elementosEnMapa.find(function (elemento) { return elemento.tipoId === tipo.id; });
   if (enMapa) {
     muestra.color = enMapa.color;
+    muestra.trama = enMapa.trama;
   }
   return muestra;
 }
@@ -2520,9 +2651,18 @@ async function crearCanvasDeHoja() {
       if (imagenesDeLeyenda[indice]) {
         dibujarImagenEnCaja(contexto, imagenesDeLeyenda[indice], xCelda, yCelda + altoFila * 0.12, altoFila * 1.25, altoFila * 0.76);
       }
+      // El nombre ocupa hasta dos renglones; si es más largo, se corta con "…"
       contexto.font = '500 ' + tamanoLetra + 'px ' + FUENTE_TEXTOS;
-      const nombre = partirEnRenglones(contexto, tipo.nombre, anchoCelda - altoFila * 1.5)[0];
-      textoEnHoja(contexto, nombre, xCelda + altoFila * 1.45, yCelda + altoFila * 0.5 + tamanoLetra * 0.35, tamanoLetra, 500, TRAZO);
+      const renglones = partirEnRenglones(contexto, tipo.nombre, anchoCelda - altoFila * 1.55);
+      const visibles = renglones.slice(0, 2);
+      if (renglones.length > 2) {
+        visibles[1] = visibles[1] + '…';
+      }
+      const altoRenglon = tamanoLetra * 1.15;
+      const primerRenglon = yCelda + altoFila * 0.5 + tamanoLetra * 0.35 - (visibles.length - 1) * altoRenglon / 2;
+      visibles.forEach(function (renglon, numero) {
+        textoEnHoja(contexto, renglon, xCelda + altoFila * 1.45, primerRenglon + numero * altoRenglon, tamanoLetra, 500, TRAZO);
+      });
     });
   }
   return canvas;
@@ -2658,6 +2798,9 @@ function conectarEventos() {
   });
   campoSuavizar.addEventListener('change', function () {
     cambiarElementoSeleccionado(function (elemento) { elemento.suavizar = campoSuavizar.checked; });
+  });
+  campoTrama.addEventListener('change', function () {
+    cambiarElementoSeleccionado(function (elemento) { elemento.trama = campoTrama.value; });
   });
   campoGrosor.addEventListener('input', function () {
     cambiarElementoSeleccionado(function (elemento) { elemento.grosor = Number(campoGrosor.value); });
@@ -2842,6 +2985,9 @@ function iniciarAplicacion() {
   document.getElementById('aviso-falta-app').remove();
   imagenMapa.src = IMAGEN_MAPA_SILOE;
   llenarTiposDeTrazo();
+  Object.keys(TRAMAS).forEach(function (clave) {
+    campoTrama.appendChild(new Option(TRAMAS[clave], clave));
+  });
   mostrarCategorias();
   mostrarGaleria();
   aplicarFondo();
