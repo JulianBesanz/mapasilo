@@ -159,7 +159,13 @@ let elementosEnMapa = [];        // los elementos colocados, en orden de dibujo
 let fondoDelMapa = { color: '#ffffff', visibilidad: 100, tenido: false };
 let nombreDelMapa = 'Mi mapa de Siloé';
 let siguienteId = 1;
-let idSeleccionado = null;
+let idSeleccionado = null;       // el elemento principal de la selección (el último que tocaste)
+let idsSeleccionados = [];       // todos los elementos elegidos (con Mayúsculas o "Varios")
+let modoVarios = false;          // en el móvil: tocar elementos los va sumando a la selección
+let portapapeles = [];           // copias de los elementos para pegar con Ctrl + V
+let vecesPegado = 0;
+let historial = [];              // fotos del mapa para deshacer y rehacer
+let posicionEnHistorial = -1;
 let nivelZoom = 1;
 let categoriaActiva = 'todos';
 
@@ -939,9 +945,11 @@ function refrescarNodo(nodo, elemento) {
   const capa = estadoCapas[buscarTipo(elemento.tipoId).capa];
   nodo.hidden = !capa.visible;
   nodo.classList.toggle('bloqueado', capa.bloqueada);
-  if (elemento.id === idSeleccionado) {
+  if (idsSeleccionados.indexOf(elemento.id) !== -1) {
     nodo.classList.add('seleccionado');
-    nodo.appendChild(crearManijas());
+    if (idsSeleccionados.length === 1) {
+      nodo.appendChild(crearManijas());
+    }
   }
 }
 
@@ -959,6 +967,7 @@ function dibujarMapa() {
   elementosEnMapa.forEach(function (elemento) {
     capaElementos.appendChild(crearNodoEnMapa(elemento));
   });
+  registrarCambio();
 }
 
 // Vuelve a dibujar un solo elemento (más rápido que redibujar todo)
@@ -967,6 +976,7 @@ function actualizarNodo(elemento) {
   if (nodo) {
     refrescarNodo(nodo, elemento);
   }
+  registrarCambio();
 }
 
 // --- Dibujar en canvas (para exportar la imagen PNG) ---
@@ -1246,20 +1256,43 @@ function agregarElementoAlMapa(tipo, x, y) {
   capaElementos.appendChild(crearNodoEnMapa(elemento));
   seleccionarElemento(elemento.id);
   mostrarCapas();
+  registrarCambio();
 }
 
-// Marca un elemento como elegido: le pone el marco con manijas y abre sus propiedades
+// Marca un elemento como elegido: le pone el marco con manijas y abre sus propiedades.
+// Con null no queda nada elegido.
 function seleccionarElemento(id) {
-  idSeleccionado = id;
+  seleccionarVarios(id === null ? [] : [id]);
+}
+
+// Elige una lista de elementos. El último de la lista es el principal:
+// sus datos son los que se ven en el panel de propiedades.
+function seleccionarVarios(ids) {
+  idsSeleccionados = ids.slice();
+  idSeleccionado = ids.length > 0 ? ids[ids.length - 1] : null;
   capaElementos.querySelectorAll('.manijas').forEach(function (manijas) { manijas.remove(); });
   capaElementos.querySelectorAll('.elemento-mapa').forEach(function (nodo) {
-    nodo.classList.toggle('seleccionado', Number(nodo.dataset.id) === id);
+    nodo.classList.toggle('seleccionado', idsSeleccionados.indexOf(Number(nodo.dataset.id)) !== -1);
   });
-  const nodoElegido = buscarNodo(id);
-  if (nodoElegido) {
+  // Las manijas solo salen cuando hay un único elemento elegido
+  const nodoElegido = buscarNodo(idSeleccionado);
+  if (nodoElegido && idsSeleccionados.length === 1) {
     nodoElegido.appendChild(crearManijas());
   }
   mostrarPropiedades();
+}
+
+// Suma un elemento a la selección, o lo quita si ya estaba
+function alternarEnSeleccion(id) {
+  if (idsSeleccionados.indexOf(id) === -1) {
+    seleccionarVarios(idsSeleccionados.concat([id]));
+  } else {
+    seleccionarVarios(idsSeleccionados.filter(function (otro) { return otro !== id; }));
+  }
+}
+
+function elementosSeleccionados() {
+  return elementosEnMapa.filter(function (elemento) { return idsSeleccionados.indexOf(elemento.id) !== -1; });
 }
 
 // Centro del elemento en la pantalla (sirve para girar y cambiar el tamaño)
@@ -1277,7 +1310,13 @@ function empezarAccionSobreElemento(evento) {
   const elemento = buscarElemento(Number(nodo.dataset.id));
   const accion = evento.target.dataset.accion || 'mover';
 
-  if (elemento.id !== idSeleccionado) {
+  // Con Mayúsculas (o con "Varios" activado) se suman elementos a la selección
+  if (evento.shiftKey || modoVarios) {
+    alternarEnSeleccion(elemento.id);
+    if (idsSeleccionados.indexOf(elemento.id) === -1) {
+      return; // lo acabamos de quitar: no hay nada que mover
+    }
+  } else if (idsSeleccionados.indexOf(elemento.id) === -1) {
     seleccionarElemento(elemento.id);
   }
   document.body.dataset.pestana = 'propiedades'; // en el móvil, abre la pestaña Editar
@@ -1302,7 +1341,9 @@ function empezarAccionSobreElemento(evento) {
     altoOriginal: elemento.alto,
     puntosOriginales: elemento.puntos ? elemento.puntos.map(function (p) { return p.slice(); }) : null,
     centro: centro,
-    distanciaInicial: Math.max(1, Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y))
+    distanciaInicial: Math.max(1, Math.hypot(evento.clientX - centro.x, evento.clientY - centro.y)),
+    // Si hay varios elegidos, se mueven todos juntos: guardamos dónde estaba cada uno
+    grupo: elementosSeleccionados().map(function (otro) { return { elemento: otro, x: otro.x, y: otro.y }; })
   };
 }
 
@@ -1313,6 +1354,16 @@ function moverElemento(evento) {
   elemento.x = Math.round(ajustarAlIman(limitar(accionEnCurso.xOriginal + desplazamientoX, 0, ANCHO_LIENZO)));
   elemento.y = Math.round(ajustarAlIman(limitar(accionEnCurso.yOriginal + desplazamientoY, 0, ALTO_LIENZO)));
   colocarNodo(accionEnCurso.nodo, elemento);
+  // Los demás elegidos se corren lo mismo que el principal
+  const corridoX = elemento.x - accionEnCurso.xOriginal;
+  const corridoY = elemento.y - accionEnCurso.yOriginal;
+  accionEnCurso.grupo.forEach(function (parte) {
+    if (parte.elemento !== elemento) {
+      parte.elemento.x = limitar(parte.x + corridoX, 0, ANCHO_LIENZO);
+      parte.elemento.y = limitar(parte.y + corridoY, 0, ALTO_LIENZO);
+      colocarNodo(buscarNodo(parte.elemento.id), parte.elemento);
+    }
+  });
 }
 
 // El ángulo sale de la posición del puntero respecto al centro del elemento.
@@ -1597,6 +1648,9 @@ function alSoltarPuntero(evento) {
   if (medicionEnCurso) {
     terminarMedicion();
   }
+  if (accionEnCurso) {
+    registrarCambio(); // al soltar, el movimiento queda guardado para poder deshacerlo
+  }
   accionEnCurso = null;
   paneoEnCurso = null;
   contenedorLienzo.classList.remove('paneando');
@@ -1626,7 +1680,10 @@ function mostrarPropiedades() {
   }
 
   const tipo = buscarTipo(elemento.tipoId);
-  tituloElemento.textContent = tipo.nombre;
+  const cantidad = idsSeleccionados.length;
+  tituloElemento.textContent = cantidad > 1 ? cantidad + ' elementos elegidos' : tipo.nombre;
+  document.getElementById('grupo-alinear').hidden = cantidad < 2;
+  document.querySelectorAll('[data-distribuir]').forEach(function (boton) { boton.disabled = cantidad < 3; });
   document.getElementById('texto-capa-elemento').textContent = 'Capa: ' + buscarCapa(tipo.capa).nombre;
 
   // Cada forma muestra solo los controles que tienen sentido para ella
@@ -1694,15 +1751,17 @@ function calibrarConCota() {
   mostrarAviso('Escala calibrada: 1 px = ' + planoConfig.metrosPorPixel.toLocaleString('es-CO', { maximumFractionDigits: 3 }) + ' m');
 }
 
-// Aplica un cambio al elemento seleccionado y lo vuelve a dibujar
+// Aplica un cambio a los elementos elegidos y los vuelve a dibujar
 function cambiarElementoSeleccionado(aplicarCambio) {
-  const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
+  const principal = buscarElemento(idSeleccionado);
+  if (!principal) {
     return;
   }
-  aplicarCambio(elemento);
-  actualizarNodo(elemento);
-  mostrarValoresDeDeslizadores(elemento);
+  elementosSeleccionados().forEach(function (elemento) {
+    aplicarCambio(elemento);
+    actualizarNodo(elemento);
+  });
+  mostrarValoresDeDeslizadores(principal);
 }
 
 // Aumentar o disminuir el tamaño multiplicando por un factor (1.15 o 0.87)
@@ -1730,41 +1789,193 @@ function girarPorBotones(grados, volverACero) {
 }
 
 function moverElementoEnCapas(haciaElFrente) {
-  const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length === 0) {
     return;
   }
   // El orden de la lista es el orden de dibujo: el último queda encima
-  elementosEnMapa = elementosEnMapa.filter(function (otro) { return otro !== elemento; });
-  if (haciaElFrente) {
-    elementosEnMapa.push(elemento);
-  } else {
-    elementosEnMapa.unshift(elemento);
-  }
+  const resto = elementosEnMapa.filter(function (otro) { return elegidos.indexOf(otro) === -1; });
+  elementosEnMapa = haciaElFrente ? resto.concat(elegidos) : elegidos.concat(resto);
   dibujarMapa();
+}
+
+// Agrega copias de unos elementos, corridas un poco, y las deja elegidas
+function agregarCopias(elementos, corrimiento) {
+  const idsNuevos = elementos.map(function (elemento) {
+    const copia = JSON.parse(JSON.stringify(elemento));
+    copia.id = siguienteId;
+    siguienteId = siguienteId + 1;
+    copia.x = limitar(elemento.x + corrimiento, 0, ANCHO_LIENZO);
+    copia.y = limitar(elemento.y + corrimiento, 0, ALTO_LIENZO);
+    elementosEnMapa.push(copia);
+    return copia.id;
+  });
+  dibujarMapa();
+  seleccionarVarios(idsNuevos);
+  mostrarCapas();
 }
 
 function duplicarElemento() {
-  const elemento = buscarElemento(idSeleccionado);
-  if (!elemento) {
-    return;
+  if (idsSeleccionados.length > 0) {
+    agregarCopias(elementosSeleccionados(), 20);
   }
-  const copia = JSON.parse(JSON.stringify(elemento));
-  copia.id = siguienteId;
-  siguienteId = siguienteId + 1;
-  copia.x = limitar(elemento.x + 20, 0, ANCHO_LIENZO);
-  copia.y = limitar(elemento.y + 20, 0, ALTO_LIENZO);
-  elementosEnMapa.push(copia);
-  capaElementos.appendChild(crearNodoEnMapa(copia));
-  seleccionarElemento(copia.id);
-  mostrarCapas();
 }
 
 function eliminarElemento() {
-  elementosEnMapa = elementosEnMapa.filter(function (elemento) { return elemento.id !== idSeleccionado; });
+  elementosEnMapa = elementosEnMapa.filter(function (elemento) { return idsSeleccionados.indexOf(elemento.id) === -1; });
   dibujarMapa();
   seleccionarElemento(null);
   mostrarCapas();
+}
+
+// --- Copiar y pegar (Ctrl + C y Ctrl + V) ---
+
+function copiarSeleccion() {
+  if (idsSeleccionados.length === 0) {
+    return;
+  }
+  portapapeles = JSON.parse(JSON.stringify(elementosSeleccionados()));
+  vecesPegado = 0;
+  mostrarAviso(portapapeles.length === 1 ? 'Elemento copiado' : portapapeles.length + ' elementos copiados');
+}
+
+function pegarCopia() {
+  if (portapapeles.length === 0) {
+    return;
+  }
+  // Cada vez que pegas, la copia queda un poco más corrida para que no tape a la anterior
+  vecesPegado = vecesPegado + 1;
+  agregarCopias(portapapeles.filter(function (elemento) { return buscarTipo(elemento.tipoId); }), 20 * vecesPegado);
+}
+
+// --- Alinear y repartir varios elementos ---
+
+// Caja de un elemento sin contar el giro: centro ± la mitad de lo que mide su dibujo
+function cajaDelElemento(elemento) {
+  const nodo = buscarNodo(elemento.id);
+  const ancho = nodo ? nodo.offsetWidth : elemento.ancho;
+  const alto = nodo ? nodo.offsetHeight : elemento.alto;
+  return { izquierda: elemento.x - ancho / 2, derecha: elemento.x + ancho / 2, arriba: elemento.y - alto / 2, abajo: elemento.y + alto / 2, ancho: ancho, alto: alto };
+}
+
+function alinearSeleccion(modo) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length < 2) {
+    return;
+  }
+  const cajas = elegidos.map(cajaDelElemento);
+  const izquierda = Math.min.apply(null, cajas.map(function (c) { return c.izquierda; }));
+  const derecha = Math.max.apply(null, cajas.map(function (c) { return c.derecha; }));
+  const arriba = Math.min.apply(null, cajas.map(function (c) { return c.arriba; }));
+  const abajo = Math.max.apply(null, cajas.map(function (c) { return c.abajo; }));
+  elegidos.forEach(function (elemento, indice) {
+    const caja = cajas[indice];
+    if (modo === 'izquierda') { elemento.x = izquierda + caja.ancho / 2; }
+    if (modo === 'centro') { elemento.x = (izquierda + derecha) / 2; }
+    if (modo === 'derecha') { elemento.x = derecha - caja.ancho / 2; }
+    if (modo === 'arriba') { elemento.y = arriba + caja.alto / 2; }
+    if (modo === 'medio') { elemento.y = (arriba + abajo) / 2; }
+    if (modo === 'abajo') { elemento.y = abajo - caja.alto / 2; }
+    elemento.x = Math.round(elemento.x);
+    elemento.y = Math.round(elemento.y);
+    actualizarNodo(elemento);
+  });
+}
+
+// Reparte los elegidos a la misma distancia entre el primero y el último
+function repartirSeleccion(eje) {
+  const elegidos = elementosSeleccionados();
+  if (elegidos.length < 3) {
+    return;
+  }
+  elegidos.sort(function (a, b) { return a[eje] - b[eje]; });
+  const primero = elegidos[0][eje];
+  const paso = (elegidos[elegidos.length - 1][eje] - primero) / (elegidos.length - 1);
+  elegidos.forEach(function (elemento, indice) {
+    elemento[eje] = Math.round(primero + paso * indice);
+    actualizarNodo(elemento);
+  });
+}
+
+// Flechas del teclado: 1 px por toque, 10 px con Mayúsculas (o un cuadro si el imán está activo)
+function empujarSeleccion(dx, dy, largo) {
+  const paso = largo ? (planoConfig.imanActivo ? planoConfig.tamanoCuadricula : 10) : 1;
+  elementosSeleccionados().forEach(function (elemento) {
+    elemento.x = limitar(elemento.x + dx * paso, 0, ANCHO_LIENZO);
+    elemento.y = limitar(elemento.y + dy * paso, 0, ALTO_LIENZO);
+    actualizarNodo(elemento);
+  });
+}
+
+// --- Deshacer y rehacer ---
+// Cada cambio guarda una "foto" del mapa (sus elementos como texto JSON).
+// Esperamos un momento antes de guardarla, para que mover un deslizador cuente como un solo cambio.
+
+function registrarCambio() {
+  clearTimeout(registrarCambio.temporizador);
+  registrarCambio.temporizador = setTimeout(guardarEnHistorial, 300);
+}
+
+function guardarEnHistorial() {
+  clearTimeout(registrarCambio.temporizador);
+  if (accionEnCurso || medicionEnCurso) {
+    registrarCambio(); // todavía estás arrastrando: lo guardamos cuando sueltes
+    return;
+  }
+  const foto = JSON.stringify(elementosEnMapa);
+  if (foto === historial[posicionEnHistorial]) {
+    return;
+  }
+  // Si habías deshecho algo y haces un cambio nuevo, lo deshecho ya no se puede rehacer
+  historial = historial.slice(0, posicionEnHistorial + 1);
+  historial.push(foto);
+  if (historial.length > 80) {
+    historial.shift();
+  }
+  posicionEnHistorial = historial.length - 1;
+  actualizarBotonesDeHistorial();
+}
+
+function volverAFoto(nuevaPosicion) {
+  posicionEnHistorial = nuevaPosicion;
+  elementosEnMapa = JSON.parse(historial[posicionEnHistorial]);
+  siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, siguienteId - 1) + 1;
+  const quedan = idsSeleccionados.filter(function (id) { return buscarElemento(id); });
+  dibujarMapa();
+  seleccionarVarios(quedan);
+  mostrarCapas();
+  actualizarBotonesDeHistorial();
+}
+
+function deshacer() {
+  guardarEnHistorial(); // por si había un cambio esperando a guardarse
+  if (posicionEnHistorial > 0) {
+    volverAFoto(posicionEnHistorial - 1);
+  }
+}
+
+function rehacer() {
+  guardarEnHistorial();
+  if (posicionEnHistorial < historial.length - 1) {
+    volverAFoto(posicionEnHistorial + 1);
+  }
+}
+
+function empezarHistorialNuevo() {
+  historial = [JSON.stringify(elementosEnMapa)];
+  posicionEnHistorial = 0;
+  actualizarBotonesDeHistorial();
+}
+
+function actualizarBotonesDeHistorial() {
+  document.getElementById('boton-deshacer').disabled = posicionEnHistorial <= 0;
+  document.getElementById('boton-rehacer').disabled = posicionEnHistorial >= historial.length - 1;
+}
+
+function cambiarModoVarios() {
+  modoVarios = !modoVarios;
+  document.getElementById('boton-varios').classList.toggle('activa', modoVarios);
+  mostrarAviso(modoVarios ? 'Toca varios elementos para elegirlos juntos' : 'Selección de uno en uno');
 }
 
 
@@ -1831,11 +2042,9 @@ function mostrarCapas() {
 }
 
 function actualizarTrasCambiarCapas() {
-  const elegido = buscarElemento(idSeleccionado);
-  if (elegido && !sePuedeEditar(elegido)) {
-    idSeleccionado = null;
-  }
   dibujarMapa();
+  // Si una capa quedó oculta o bloqueada, sus elementos dejan de estar elegidos
+  seleccionarVarios(idsSeleccionados.filter(function (id) { return sePuedeEditar(buscarElemento(id)); }));
   mostrarCapas();
   mostrarPropiedades();
 }
@@ -1919,11 +2128,13 @@ function cargarDatosDelMapa(datos) {
   elementosEnMapa = (datos.elementos || []).filter(function (elemento) { return buscarTipo(elemento.tipoId); });
   siguienteId = elementosEnMapa.reduce(function (mayor, elemento) { return Math.max(mayor, elemento.id); }, 0) + 1;
   idSeleccionado = null;
+  idsSeleccionados = [];
   aplicarFondo();
   aplicarPlano();
   dibujarMapa();
   mostrarCapas();
   mostrarPropiedades();
+  empezarHistorialNuevo();
 }
 
 // Los mapas se guardan en el navegador (localStorage) como texto JSON
@@ -2529,11 +2740,43 @@ function conectarEventos() {
   document.getElementById('boton-eliminar').addEventListener('click', eliminarElemento);
   document.getElementById('boton-listo').addEventListener('click', function () { seleccionarElemento(null); });
 
-  // Teclado: Suprimir quita el elemento; R gira 15° (Mayúsculas + R, al otro lado)
+  // Editar varios a la vez, alinear, copiar y deshacer
+  document.getElementById('boton-deshacer').addEventListener('click', deshacer);
+  document.getElementById('boton-rehacer').addEventListener('click', rehacer);
+  document.getElementById('boton-varios').addEventListener('click', cambiarModoVarios);
+  document.querySelectorAll('[data-alinear]').forEach(function (boton) {
+    boton.addEventListener('click', function () { alinearSeleccion(boton.dataset.alinear); });
+  });
+  document.querySelectorAll('[data-distribuir]').forEach(function (boton) {
+    boton.addEventListener('click', function () { repartirSeleccion(boton.dataset.distribuir); });
+  });
+
+  // Teclado:
+  //   Ctrl + Z deshace, Ctrl + Y (o Ctrl + Mayúsculas + Z) rehace
+  //   Ctrl + C copia y Ctrl + V pega
+  //   Flechas mueven lo elegido (con Mayúsculas, más lejos)
+  //   Suprimir quita lo elegido; R gira 15° (Mayúsculas + R, al otro lado)
   document.addEventListener('keydown', function (evento) {
-    const escribiendo = evento.target.tagName === 'INPUT';
+    const escribiendo = ['INPUT', 'SELECT', 'TEXTAREA'].indexOf(evento.target.tagName) !== -1;
     if (evento.key === 'Escape') {
       cambiarHerramienta('seleccionar');
+    }
+    const conControl = evento.ctrlKey || evento.metaKey;  // metaKey es la tecla Cmd del Mac
+    const tecla = evento.key.toLowerCase();
+    if (conControl && !escribiendo && herramienta !== 'dibujar') {
+      if (tecla === 'z' && !evento.shiftKey) {
+        evento.preventDefault();
+        deshacer();
+      } else if (tecla === 'y' || (tecla === 'z' && evento.shiftKey)) {
+        evento.preventDefault();
+        rehacer();
+      } else if (tecla === 'c') {
+        copiarSeleccion();
+      } else if (tecla === 'v') {
+        evento.preventDefault();
+        pegarCopia();
+      }
+      return;
     }
     if (herramienta === 'dibujar' && !escribiendo) {
       if (evento.key === 'Enter') {
@@ -2553,6 +2796,11 @@ function conectarEventos() {
     }
     if (evento.key === 'r' || evento.key === 'R') {
       girarPorBotones(evento.shiftKey ? -15 : 15, false);
+    }
+    const flechas = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (flechas[evento.key]) {
+      evento.preventDefault();
+      empujarSeleccion(flechas[evento.key][0], flechas[evento.key][1], evento.shiftKey);
     }
   });
 
@@ -2602,6 +2850,7 @@ function iniciarAplicacion() {
   dibujarMapa();
   mostrarCapas();
   mostrarPropiedades();
+  empezarHistorialNuevo();
   conectarEventos();
   ajustarZoomALaPantalla();
 }

@@ -35,6 +35,10 @@
       <div class="barra-herramientas">
         <button class="herramienta" data-herramienta="seleccionar" title="Seleccionar y mover elementos">Seleccionar</button>
         <button class="herramienta" data-herramienta="medir" title="Arrastra sobre el mapa para medir">Medir</button>
+        <button class="herramienta" id="boton-varios" title="Tocar varios elementos para elegirlos juntos (o Mayúsculas + clic)">Varios</button>
+        <span class="separador"></span>
+        <button class="herramienta" id="boton-deshacer" title="Deshacer (Ctrl + Z)">Deshacer</button>
+        <button class="herramienta" id="boton-rehacer" title="Rehacer (Ctrl + Y)">Rehacer</button>
         <span class="separador"></span>
         <button class="herramienta" id="boton-cuadricula" title="Mostrar u ocultar la cuadrícula">Cuadrícula</button>
         <button class="herramienta" id="boton-iman" title="Alinear los elementos a la cuadrícula">Imán</button>
@@ -181,6 +185,24 @@
           <span><span id="nombre-alto">Alto</span>: <strong id="valor-alto"></strong></span>
           <input type="range" id="campo-alto" min="2" max="700">
         </label>
+
+        <div class="campo" id="grupo-alinear" hidden>
+          <span>Alinear</span>
+          <div class="fila-botones fila-tres">
+            <button class="boton" data-alinear="izquierda" title="Alinear a la izquierda">Izquierda</button>
+            <button class="boton" data-alinear="centro" title="Centrar en horizontal">Centro</button>
+            <button class="boton" data-alinear="derecha" title="Alinear a la derecha">Derecha</button>
+            <button class="boton" data-alinear="arriba" title="Alinear arriba">Arriba</button>
+            <button class="boton" data-alinear="medio" title="Centrar en vertical">Medio</button>
+            <button class="boton" data-alinear="abajo" title="Alinear abajo">Abajo</button>
+          </div>
+          <span>Repartir a la misma distancia</span>
+          <div class="fila-botones">
+            <button class="boton" data-distribuir="x" title="Necesita 3 elementos o más">En horizontal</button>
+            <button class="boton" data-distribuir="y" title="Necesita 3 elementos o más">En vertical</button>
+          </div>
+          <p class="ayuda">Mayúsculas + clic suma o quita elementos. Ctrl + C y Ctrl + V copian y pegan; las flechas los mueven.</p>
+        </div>
 
         <div class="fila-botones">
           <button id="boton-achicar" class="boton">− Disminuir</button>

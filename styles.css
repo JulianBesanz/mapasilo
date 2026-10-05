@@ -568,6 +568,18 @@ body[data-herramienta="dibujar"] .contenedor-lienzo {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
+.herramienta:disabled,
+.boton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#grupo-alinear .boton {
+  padding-left: 4px;
+  padding-right: 4px;
+  font-size: 0.8rem;
+}
+
 /* ---------- Capas ---------- */
 .lista-capas {
   margin: 0 0 10px;
