@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapa interactivo de Siloé</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-pestana="elementos">
+
+  <!-- ===== Barra superior: título y acciones principales ===== -->
+  <header class="barra-superior">
+    <h1 class="titulo-app">Mapa interactivo de Siloé</h1>
+    <nav class="acciones-principales">
+      <button id="boton-nuevo" class="boton">Nuevo</button>
+      <button id="boton-mis-mapas" class="boton">Mis mapas</button>
+      <button id="boton-exportar" class="boton boton-principal">Exportar</button>
+      <button id="boton-vista-limpia" class="boton">Vista limpia</button>
+    </nav>
+  </header>
+
+  <div class="area-trabajo">
+
+    <!-- ===== Panel izquierdo: elementos para poner en el mapa ===== -->
+    <aside class="panel panel-elementos">
+      <h2 class="titulo-panel">Elementos</h2>
+      <input type="search" id="campo-busqueda" class="campo-busqueda" placeholder="Buscar: casa, árbol, agua…">
+      <div id="lista-categorias" class="lista-categorias"></div>
+      <p class="ayuda">Arrastra un elemento al mapa o tócalo para ponerlo en el centro.</p>
+      <div id="galeria-elementos" class="galeria-elementos"></div>
+    </aside>
+
+    <!-- ===== Centro: el mapa ===== -->
+    <main class="zona-mapa">
+      <div id="contenedor-lienzo" class="contenedor-lienzo">
+        <div id="marco-lienzo" class="marco-lienzo">
+          <div id="lienzo" class="lienzo">
+            <img id="imagen-mapa" class="imagen-mapa" alt="Mapa base de Siloé" draggable="false">
+            <div id="capa-elementos" class="capa-elementos"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controles-zoom">
+        <button id="boton-alejar" class="boton-zoom" aria-label="Alejar">−</button>
+        <span id="texto-zoom" class="texto-zoom">100%</span>
+        <button id="boton-acercar" class="boton-zoom" aria-label="Acercar">+</button>
+        <button id="boton-ajustar" class="boton-zoom boton-ajustar">Ajustar</button>
+      </div>
+    </main>
+
+    <!-- ===== Panel derecho: fondo del mapa o propiedades del elemento elegido ===== -->
+    <aside class="panel panel-propiedades">
+
+      <section id="seccion-fondo">
+        <h2 class="titulo-panel">Fondo del mapa</h2>
+        <label class="campo">
+          Color de fondo
+          <input type="color" id="campo-color-fondo" value="#ffffff">
+        </label>
+        <label class="campo">
+          <span>Visibilidad del mapa: <strong id="valor-visibilidad">100%</strong></span>
+          <input type="range" id="campo-visibilidad" min="0" max="100" value="100">
+        </label>
+        <label class="campo campo-casilla">
+          <input type="checkbox" id="campo-tenido">
+          Teñir el mapa con el color de fondo
+        </label>
+        <p class="ayuda">Toca un elemento del mapa para moverlo, cambiar su tamaño, color o texto.</p>
+      </section>
+
+      <section id="seccion-elemento" hidden>
+        <h2 class="titulo-panel" id="titulo-elemento">Elemento</h2>
+
+        <label class="campo" id="grupo-texto">
+          Texto
+          <input type="text" id="campo-texto" class="campo-texto">
+        </label>
+
+        <label class="campo" id="grupo-color">
+          Color
+          <input type="color" id="campo-color">
+        </label>
+
+        <label class="campo" id="grupo-tamano">
+          <span>Tamaño: <strong id="valor-tamano"></strong></span>
+          <input type="range" id="campo-tamano" min="8" max="300">
+        </label>
+
+        <label class="campo" id="grupo-ancho">
+          <span><span id="nombre-ancho">Ancho</span>: <strong id="valor-ancho"></strong></span>
+          <input type="range" id="campo-ancho" min="10" max="900">
+        </label>
+
+        <label class="campo" id="grupo-alto">
+          <span><span id="nombre-alto">Alto</span>: <strong id="valor-alto"></strong></span>
+          <input type="range" id="campo-alto" min="2" max="700">
+        </label>
+
+        <div class="fila-botones">
+          <button id="boton-achicar" class="boton">− Disminuir</button>
+          <button id="boton-agrandar" class="boton">+ Aumentar</button>
+        </div>
+
+        <label class="campo">
+          <span>Rotación: <strong id="valor-rotacion"></strong></span>
+          <input type="range" id="campo-rotacion" min="-180" max="180">
+        </label>
+        <div class="fila-botones fila-tres">
+          <button id="boton-girar-izquierda" class="boton" title="Girar 15° a la izquierda">↺ 15°</button>
+          <button id="boton-girar-derecha" class="boton" title="Girar 15° a la derecha">↻ 15°</button>
+          <button id="boton-girar-recto" class="boton" title="Volver a 0°">0°</button>
+        </div>
+        <p class="ayuda">También puedes girar con la manija redonda de arriba y cambiar el tamaño con la cuadrada de la esquina.</p>
+
+        <label class="campo">
+          <span>Opacidad: <strong id="valor-opacidad"></strong></span>
+          <input type="range" id="campo-opacidad" min="10" max="100">
+        </label>
+
+        <div class="fila-botones">
+          <button id="boton-al-frente" class="boton">Al frente</button>
+          <button id="boton-al-fondo" class="boton">Al fondo</button>
+        </div>
+        <div class="fila-botones">
+          <button id="boton-duplicar" class="boton">Duplicar</button>
+          <button id="boton-eliminar" class="boton boton-peligro">Quitar</button>
+        </div>
+        <button id="boton-listo" class="boton boton-principal boton-ancho">Listo</button>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ===== Pestañas que solo se ven en el móvil ===== -->
+  <nav class="pestanas-movil">
+    <button class="pestana" data-pestana="elementos">Elementos</button>
+    <button class="pestana" data-pestana="propiedades">Editar</button>
+  </nav>
+
+  <button id="boton-salir-vista-limpia" class="boton boton-principal boton-salir-vista-limpia">Salir de vista limpia</button>
+
+  <!-- ===== Ventana: guardar y abrir mapas ===== -->
+  <dialog id="dialogo-mapas" class="dialogo">
+    <h2>Mis mapas</h2>
+    <label class="campo">
+      Nombre del mapa
+      <input type="text" id="campo-nombre-mapa" class="campo-texto">
+    </label>
+    <button id="boton-guardar" class="boton boton-principal boton-ancho">Guardar este mapa</button>
+    <h3>Mapas guardados</h3>
+    <ul id="lista-mapas" class="lista-mapas"></ul>
+    <button class="boton boton-ancho boton-cerrar">Cerrar</button>
+  </dialog>
+
+  <!-- ===== Ventana: exportar ===== -->
+  <dialog id="dialogo-exportar" class="dialogo">
+    <h2>Exportar</h2>
+    <button id="boton-exportar-png" class="boton boton-principal boton-ancho">Imagen PNG (infografía)</button>
+    <button id="boton-imprimir" class="boton boton-ancho">Imprimir o guardar como PDF</button>
+    <button id="boton-descargar-archivo" class="boton boton-ancho">Descargar archivo del mapa (.json)</button>
+    <button id="boton-abrir-archivo" class="boton boton-ancho">Abrir archivo del mapa (.json)</button>
+    <input type="file" id="campo-abrir-archivo" accept=".json,application/json" hidden>
+    <button class="boton boton-ancho boton-cerrar">Cerrar</button>
+  </dialog>
+
+  <div id="aviso" class="aviso"></div>
+
+  <!-- Si app.js no carga, este aviso se queda visible. app.js lo quita al arrancar. -->
+  <div id="aviso-falta-app" style="position:fixed;inset:auto 16px 16px 16px;z-index:300;padding:14px 18px;border-radius:10px;background:#fef3c7;color:#78350f;font:15px system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.2)">
+    No se pudo cargar <strong>app.js</strong>, por eso no se ve el mapa.
+    Guarda <strong>index.html</strong>, <strong>styles.css</strong> y <strong>app.js</strong> juntos en la misma carpeta
+    y abre index.html con doble clic en Chrome, Edge o Firefox.
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

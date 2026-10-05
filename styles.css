@@ -1,0 +1,701 @@
+/* =============================================================
+   MAPA INTERACTIVO DE SILOÉ · Estilos
+   ============================================================= */
+
+/* ---------- Colores y medidas que se repiten ---------- */
+:root {
+  --color-principal: #2563eb;
+  --color-principal-oscuro: #1d4ed8;
+  --color-peligro: #dc2626;
+  --color-texto: #1f2937;
+  --color-texto-suave: #6b7280;
+  --color-borde: #e5e7eb;
+  --color-panel: #ffffff;
+  --color-fondo-app: #f3f4f6;
+  --radio: 10px;
+  --ancho-panel: 290px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--color-texto);
+  background: var(--color-fondo-app);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* ---------- Botones ---------- */
+.boton {
+  padding: 8px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: #ffffff;
+  color: var(--color-texto);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton:hover {
+  background: #f9fafb;
+}
+
+.boton-principal {
+  border-color: var(--color-principal);
+  background: var(--color-principal);
+  color: #ffffff;
+}
+
+.boton-principal:hover {
+  background: var(--color-principal-oscuro);
+}
+
+.boton-peligro {
+  color: var(--color-peligro);
+}
+
+.boton-ancho {
+  width: 100%;
+}
+
+/* ---------- Barra superior ---------- */
+.barra-superior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.titulo-app {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.acciones-principales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ---------- Distribución: panel | mapa | panel ---------- */
+.area-trabajo {
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--ancho-panel) 1fr var(--ancho-panel);
+  min-height: 0;
+}
+
+.panel {
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--color-panel);
+}
+
+.panel-elementos {
+  border-right: 1px solid var(--color-borde);
+}
+
+.panel-propiedades {
+  border-left: 1px solid var(--color-borde);
+}
+
+.titulo-panel {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.ayuda {
+  margin: 10px 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Panel de elementos ---------- */
+.campo-busqueda,
+.campo-texto {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.lista-categorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.boton-categoria {
+  padding: 5px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.boton-categoria.activa {
+  border-color: var(--color-principal);
+  background: var(--color-principal);
+  color: #ffffff;
+}
+
+.galeria-elementos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.tarjeta-elemento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: #ffffff;
+  font-size: 0.75rem;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+  /* En el móvil: deslizar arriba/abajo hace scroll, hacia un lado arrastra */
+  touch-action: pan-y;
+}
+
+.tarjeta-elemento:hover {
+  border-color: var(--color-principal);
+  background: #eff6ff;
+}
+
+.caja-vista-previa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 44px;
+}
+
+.sin-resultados {
+  grid-column: 1 / -1;
+  color: var(--color-texto-suave);
+  font-size: 0.85rem;
+}
+
+/* Copia que sigue al dedo o al ratón mientras arrastras desde el panel */
+.fantasma-arrastre {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.3);
+  opacity: 0.85;
+}
+
+/* ---------- Zona del mapa ---------- */
+.zona-mapa {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.contenedor-lienzo {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 24px;
+  background-color: #e5e7eb;
+  background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+  background-size: 16px 16px;
+  cursor: grab;
+}
+
+.contenedor-lienzo.paneando {
+  cursor: grabbing;
+}
+
+/* margin: auto centra el mapa sin cortar el scroll cuando está ampliado */
+.marco-lienzo {
+  flex-shrink: 0;
+  margin: auto;
+}
+
+.lienzo {
+  position: relative;
+  width: 898px;
+  height: 730px;
+  /* visible: así las manijas se pueden tocar aunque el elemento esté en el borde */
+  overflow: visible;
+  transform-origin: 0 0;
+  isolation: isolate;
+  background: #ffffff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+.imagen-mapa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  pointer-events: none;
+}
+
+.capa-elementos {
+  position: absolute;
+  inset: 0;
+}
+
+.controles-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.boton-zoom {
+  min-width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.boton-zoom:hover {
+  background: #f3f4f6;
+}
+
+.boton-ajustar {
+  padding: 0 12px;
+  font-size: 0.85rem;
+}
+
+.texto-zoom {
+  min-width: 48px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ---------- Elementos colocados en el mapa ---------- */
+.elemento-mapa {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+/* ---------- Marco de selección y manijas ----------
+   --escala-inversa vale 1 / zoom (lo pone app.js). Al multiplicar por ella,
+   las manijas se ven siempre del mismo tamaño aunque el mapa esté ampliado. */
+.lienzo {
+  --escala-inversa: 1;
+  --tamano-manija: 16px;
+}
+
+.manijas {
+  position: absolute;
+  inset: calc(-6px * var(--escala-inversa));
+  border: calc(1.5px * var(--escala-inversa)) dashed var(--color-principal);
+  pointer-events: none;
+}
+
+.manija {
+  position: absolute;
+  width: calc(var(--tamano-manija) * var(--escala-inversa));
+  height: calc(var(--tamano-manija) * var(--escala-inversa));
+  border: calc(2px * var(--escala-inversa)) solid var(--color-principal);
+  background: #ffffff;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.manija-giro {
+  left: 50%;
+  top: calc(-34px * var(--escala-inversa));
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+}
+
+.linea-giro {
+  position: absolute;
+  left: 50%;
+  top: calc(-34px * var(--escala-inversa));
+  width: calc(1.5px * var(--escala-inversa));
+  height: calc(28px * var(--escala-inversa));
+  background: var(--color-principal);
+}
+
+.manija-tamano {
+  right: 0;
+  bottom: 0;
+  border-radius: 3px;
+  transform: translate(50%, 50%);
+  cursor: nwse-resize;
+}
+
+/* En pantallas táctiles las manijas son más grandes para el dedo */
+@media (pointer: coarse) {
+  .lienzo {
+    --tamano-manija: 26px;
+  }
+}
+
+/* Cómo se ve cada forma (sirve igual para el mapa y para el panel) */
+.forma-simbolo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.forma-zona {
+  border-style: solid;
+}
+
+.forma-linea {
+  position: relative;
+}
+
+.linea-centro {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.forma-texto {
+  line-height: 1.2;
+  white-space: nowrap;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.forma-texto.con-contorno {
+  -webkit-text-stroke: 0.15em #ffffff;
+  paint-order: stroke fill;
+}
+
+.forma-texto.con-fondo {
+  padding: 0.3em 0.7em;
+  border: 1px solid #d1d5db;
+}
+
+.forma-flecha svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Panel de propiedades ---------- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+
+.campo-casilla {
+  flex-direction: row;
+  align-items: center;
+}
+
+.campo input[type="range"] {
+  width: 100%;
+}
+
+.campo input[type="color"] {
+  width: 100%;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: #ffffff;
+}
+
+.fila-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.fila-botones.fila-tres {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* ---------- Ventanas (Mis mapas, Exportar) ---------- */
+.dialogo {
+  width: min(420px, calc(100% - 32px));
+  border: none;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.dialogo::backdrop {
+  background: rgba(17, 24, 39, 0.45);
+}
+
+.dialogo h2 {
+  margin: 0 0 14px;
+}
+
+.dialogo h3 {
+  margin: 18px 0 8px;
+  font-size: 0.95rem;
+}
+
+.dialogo .boton-ancho {
+  margin-bottom: 8px;
+}
+
+.lista-mapas {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.fila-mapa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.fila-mapa-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fila-mapa-nombre small {
+  display: block;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Aviso flotante ---------- */
+.aviso {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 200;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.aviso.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- Vista limpia (solo el mapa) ---------- */
+.pestanas-movil,
+.boton-salir-vista-limpia {
+  display: none;
+}
+
+body.vista-limpia .barra-superior,
+body.vista-limpia .panel,
+body.vista-limpia .pestanas-movil,
+body.vista-limpia .controles-zoom {
+  display: none !important;
+}
+
+body.vista-limpia .area-trabajo {
+  grid-template-columns: 1fr;
+}
+
+body.vista-limpia .boton-salir-vista-limpia {
+  display: block;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+}
+
+/* ---------- Pantallas medianas ---------- */
+@media (max-width: 1100px) {
+  :root {
+    --ancho-panel: 240px;
+  }
+}
+
+/* ---------- Móvil y tableta: el mapa arriba, un panel abajo ---------- */
+@media (max-width: 800px) {
+  .titulo-app {
+    font-size: 1rem;
+  }
+
+  .acciones-principales .boton {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .area-trabajo {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* El mapa va primero (arriba) aunque en el HTML esté después del panel */
+  .zona-mapa {
+    flex: 1;
+    order: -1;
+  }
+
+  .aviso {
+    bottom: 64px;
+  }
+
+  .contenedor-lienzo {
+    padding: 12px;
+  }
+
+  .panel {
+    height: 40vh;
+    border: none;
+    border-top: 1px solid var(--color-borde);
+  }
+
+  /* Solo se ve el panel de la pestaña elegida */
+  body[data-pestana="elementos"] .panel-propiedades,
+  body[data-pestana="propiedades"] .panel-elementos {
+    display: none;
+  }
+
+  .pestanas-movil {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--color-panel);
+    border-top: 1px solid var(--color-borde);
+  }
+
+  .pestana {
+    padding: 12px;
+    border: none;
+    background: transparent;
+    color: var(--color-texto-suave);
+  }
+
+  body[data-pestana="elementos"] .pestana[data-pestana="elementos"],
+  body[data-pestana="propiedades"] .pestana[data-pestana="propiedades"] {
+    color: var(--color-principal);
+    font-weight: 600;
+    box-shadow: inset 0 3px 0 var(--color-principal);
+  }
+
+  body.vista-limpia .area-trabajo {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .barra-superior {
+    padding: 8px 12px;
+  }
+
+  .acciones-principales {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .acciones-principales .boton {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+
+  .galeria-elementos {
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  }
+}
+
+/* ---------- Impresión / PDF: solo se imprime el mapa ---------- */
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    display: block;
+    height: auto;
+    background: #ffffff;
+  }
+
+  .barra-superior,
+  .panel,
+  .pestanas-movil,
+  .controles-zoom,
+  .boton-salir-vista-limpia,
+  .aviso {
+    display: none !important;
+  }
+
+  .area-trabajo {
+    display: block;
+  }
+
+  .contenedor-lienzo {
+    display: block;
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+
+  .marco-lienzo {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .lienzo {
+    transform: none !important;
+    box-shadow: none;
+    margin: 0 auto;
+  }
+}
